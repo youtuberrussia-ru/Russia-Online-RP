@@ -13,7 +13,7 @@ export async function playerRoutes(app:FastifyInstance){
  app.post("/reports",{preHandler:async(request,reply)=>{try{await request.jwtVerify();}catch{return reply.code(401).send({error:"UNAUTHORIZED"});}}},async(request,reply)=>{
   const parsed=reportSchema.safeParse(request.body);
   if(!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
-  const report=await app.prisma.playerReport.create({data:{authorId:request.user.sub,...parsed.data}});
+  const report=await app.prisma.playerReport.create({data:{authorId:request.user.sub,category:parsed.data.category,description:parsed.data.description,...(parsed.data.targetId?{targetId:parsed.data.targetId}:{})}});
   return reply.code(201).send({id:report.id,status:report.status,createdAt:report.createdAt});
  });
  app.post("/organizations/applications",{preHandler:async(request,reply)=>{try{await request.jwtVerify();}catch{return reply.code(401).send({error:"UNAUTHORIZED"});}}},async(request,reply)=>{
