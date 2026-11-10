@@ -15,7 +15,8 @@ function permission(name:Permission){return async(request:FastifyRequest,reply:F
 };}
 const appointSchema=z.object({userId:z.string().min(1),role:z.enum(["GA","ZGA","SENIOR_ADMIN","ADMIN","SENIOR_MODERATOR","MODERATOR","JUNIOR_MODERATOR"]),reason:z.string().trim().min(5).max(500)});
 const revokeSchema=z.object({userId:z.string().min(1),reason:z.string().trim().min(5).max(500)});
-const resolveReportSchema=z.object({status:z.enum(["IN_REVIEW","RESOLVED","REJECTED"]),resolution:z.string().trim().min(5).max(1000)});\nconst appealDecisionSchema=z.object({decision:z.enum(["APPROVED","DENIED"]),note:z.string().trim().min(5).max(1000)});
+const resolveReportSchema=z.object({status:z.enum(["IN_REVIEW","RESOLVED","REJECTED"]),resolution:z.string().trim().min(5).max(1000)});
+const appealDecisionSchema=z.object({decision:z.enum(["APPROVED","DENIED"]),note:z.string().trim().min(5).max(1000)});
 export async function adminRoutes(app:FastifyInstance){
  app.get("/me",{preHandler:[requireAdmin]},async request=>({userId:request.user.sub,role:request.user.sub===app.config.OWNER_USER_ID?"OWNER":request.adminRole}));
  app.get("/overview",{preHandler:[requireAdmin,permission("dashboard.read")]},async()=>({status:"online",features:["players","economy","organizations","moderation","security"],note:"Live game metrics are connected in a later milestone."}));
