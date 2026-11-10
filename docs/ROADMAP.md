@@ -9,6 +9,8 @@
 - [x] Economy ledger primitive and conservative anti-cheat ban service.
 - [x] Initial server-authoritative movement integrator with input validation and unit tests.
 - [x] In-memory world session registry with capacity, join/leave and server-state snapshot tests.
+- [x] Authenticated HTTP world-session prototype with server-selected spawn, sequenced movement inputs and server-derived elapsed time.
+- [ ] Replace process-local sessions with shared room state and realtime WebSocket transport; add collision geometry and reconnect handling.
 - [ ] Run CI, Prisma validation, typecheck and tests; fix every reported issue.
 
 ## Phase 1 — accounts and operations
