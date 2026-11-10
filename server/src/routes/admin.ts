@@ -15,7 +15,7 @@ function permission(name:Permission){return async(request:FastifyRequest,reply:F
 };}
 const appointSchema=z.object({userId:z.string().min(1),role:z.enum(["GA","ZGA","SENIOR_ADMIN","ADMIN","SENIOR_MODERATOR","MODERATOR","JUNIOR_MODERATOR"]),reason:z.string().trim().min(5).max(500)});
 const revokeSchema=z.object({userId:z.string().min(1),reason:z.string().trim().min(5).max(500)});
-const resolveReportSchema=z.object({status:z.enum(["IN_REVIEW","RESOLVED","REJECTED"]),resolution:z.string().trim().min(5).max(1000)});
+const resolveReportSchema=z.object({status:z.enum(["IN_REVIEW","RESOLVED","REJECTED"]),resolution:z.string().trim().min(5).max(1000)});\nconst appealDecisionSchema=z.object({decision:z.enum(["APPROVED","DENIED"]),note:z.string().trim().min(5).max(1000)});
 export async function adminRoutes(app:FastifyInstance){
  app.get("/me",{preHandler:[requireAdmin]},async request=>({userId:request.user.sub,role:request.user.sub===app.config.OWNER_USER_ID?"OWNER":request.adminRole}));
  app.get("/overview",{preHandler:[requireAdmin,permission("dashboard.read")]},async()=>({status:"online",features:["players","economy","organizations","moderation","security"],note:"Live game metrics are connected in a later milestone."}));
@@ -57,4 +57,21 @@ export async function adminRoutes(app:FastifyInstance){
   await writeAudit(app.prisma,{actorId:request.user.sub,action:"PLAYER_REPORT_UPDATED",targetType:"player_report",targetId:report.id,reason:parsed.data.resolution,metadata:{status:parsed.data.status}});
   return reply.send({id:updated.id,status:updated.status,resolution:updated.resolution});
  });
-}
+} app.get("/ban-appeals",{preHandler:[requireAdmin,permission("security.review")]},async()=>{
+  return app.prisma.banAppeal.findMany({where:{status:"PENDING"},include:{user:{select:{id:true,email:true,profile:{select:{nickname:true}}}},ban:true},orderBy:{createdAt:"asc"},take:100});
+ });
+ app.patch("/ban-appeals/:id",{preHandler:[requireAdmin,permission("security.review")]},async(request,reply)=>{
+  const params=z.object({id:z.string().min(1)}).safeParse(request.params);
+  const parsed=appealDecisionSchema.safeParse(request.body);
+  if(!params.success||!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  const appeal=await app.prisma.banAppeal.findUnique({where:{id:params.data.id}});
+  if(!appeal||appeal.status!=="PENDING")return reply.code(404).send({error:"PENDING_APPEAL_NOT_FOUND"});
+  const result=await app.prisma.$transaction(async tx=>{
+   const updated=await tx.banAppeal.update({where:{id:appeal.id},data:{status:parsed.data.decision,reviewedBy:request.user.sub,decision:parsed.data.note}});
+   if(parsed.data.decision==="APPROVED")await tx.accountBan.update({where:{id:appeal.banId},data:{status:"REVOKED",revokedAt:new Date(),revokedBy:request.user.sub}});
+   return updated;
+  });
+  await writeAudit(app.prisma,{actorId:request.user.sub,action:"BAN_APPEAL_REVIEWED",targetType:"ban_appeal",targetId:appeal.id,reason:parsed.data.note,metadata:{decision:parsed.data.decision}});
+  return reply.send({id:result.id,status:result.status});
+ });
+
