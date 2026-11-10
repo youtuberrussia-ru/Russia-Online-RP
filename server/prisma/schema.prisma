@@ -162,7 +162,8 @@ model AccountBan {
   createdAt DateTime  @default(now())
   revokedAt DateTime?
   revokedBy String?
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appeals   BanAppeal[]
 
   @@index([userId, status])
 }
