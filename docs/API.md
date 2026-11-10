@@ -7,7 +7,8 @@ Base URL in local development: `http://localhost:3000`. Protected endpoints requ
 
 ## Authentication
 - `POST /v1/auth/register` — body: `{ "email", "password", "nickname" }`.
-- `POST /v1/auth/login` — body: `{ "email", "password" }`.
+- `POST /v1/auth/login` — body: `{ "email", "password" }`; currently limited to 5 attempts per IP per 15 minutes.
+- Registration is currently limited to 3 attempts per IP per hour. These are IP-level safeguards, not a substitute for per-account risk controls.
 - Email verification, password reset, MFA, session listing/revocation and email delivery are not implemented yet. Do not expose this API publicly until those launch requirements and abuse controls are complete.
 
 ## Player
