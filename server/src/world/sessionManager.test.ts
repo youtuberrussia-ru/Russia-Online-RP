@@ -21,6 +21,15 @@ describe("world session manager",()=>{
   expect(state.position.z).toBeCloseTo(0.225);
   expect(world.getSnapshot()).toHaveLength(1);
  });
+ it("derives movement time from server timestamps",()=>{
+  const world=new WorldSessionManager();
+  world.join("player-a");
+  const first=world.applyInputAt("player-a",{sequence:1,forward:1,strafe:0,turn:0},1000);
+  const second=world.applyInputAt("player-a",{sequence:2,forward:1,strafe:0,turn:0},1020);
+  expect(first.position.z).toBeCloseTo(0.225);
+  expect(second.position.z-first.position.z).toBeCloseTo(0.09);
+  expect(()=>world.applyInputAt("player-a",{sequence:3,forward:1,strafe:0,turn:0},1010)).toThrow("STALE_SERVER_TIMESTAMP");
+ });
  it("rejects input from a player without an active session",()=>{
   const world=new WorldSessionManager();
   expect(()=>world.applyInput("missing",{sequence:1,forward:1,strafe:0,turn:0},0.016,1000)).toThrow("PLAYER_NOT_IN_WORLD");
