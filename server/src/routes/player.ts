@@ -28,6 +28,16 @@ export async function playerRoutes(app:FastifyInstance){
   const application=await app.prisma.organizationApplication.create({data:{profileId:profile.id,organizationId:org.id,answers:parsed.data.answers}});
   return reply.code(201).send({id:application.id,status:application.status,createdAt:application.createdAt});
  });
+ app.post("/ban-appeals",{preHandler:async(request,reply)=>{try{await request.jwtVerify();}catch{return reply.code(401).send({error:"UNAUTHORIZED"});}}},async(request,reply)=>{
+  const parsed=z.object({message:z.string().trim().min(30).max(3000)}).safeParse(request.body);
+  if(!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  const ban=await app.prisma.accountBan.findFirst({where:{userId:request.user.sub,status:"ACTIVE"}});
+  if(!ban)return reply.code(404).send({error:"ACTIVE_BAN_NOT_FOUND"});
+  const pending=await app.prisma.banAppeal.findFirst({where:{banId:ban.id,status:"PENDING"}});
+  if(pending)return reply.code(409).send({error:"APPEAL_ALREADY_PENDING"});
+  const appeal=await app.prisma.banAppeal.create({data:{userId:request.user.sub,banId:ban.id,message:parsed.data.message}});
+  return reply.code(201).send({id:appeal.id,status:appeal.status,createdAt:appeal.createdAt});
+ });
  app.post("/daily-rewards/claim",{preHandler:async(request,reply)=>{try{await request.jwtVerify();}catch{return reply.code(401).send({error:"UNAUTHORIZED"});}}},async(request,reply)=>{
   try{return await claimDailyReward(app.prisma,request.user.sub);}
   catch(error){request.log.error(error);return reply.code(409).send({error:"CLAIM_CONFLICT_OR_WALLET_UNAVAILABLE"});}
