@@ -40,11 +40,9 @@ export async function worldRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "INVALID_INPUT" });
     const now = Date.now();
     try {
-      const previous = world.getSnapshot().find(player => player.playerId === request.user.sub);
-      if (!previous) return reply.code(409).send({ error: "PLAYER_NOT_IN_WORLD" });
-      // Delta is calculated by the server. The client cannot submit position, speed or time.
-      const deltaSeconds = Math.min(0.05, Math.max(0, (now - (world as any).lastUpdatedAt) / 1000));
-      const player = world.applyInput(request.user.sub, parsed.data, deltaSeconds || 0.05, now, false);
+      // Delta is calculated from the server's previous accepted input timestamp.
+      // The client cannot submit position, speed, elapsed time or sprint state.
+      const player = world.applyInputAt(request.user.sub, parsed.data, now);
       return { player, playersOnlineInThisInstance: world.size };
     } catch (error) {
       const code = error instanceof Error ? error.message : "MOVEMENT_REJECTED";
