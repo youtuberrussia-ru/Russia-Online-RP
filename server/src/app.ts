@@ -8,6 +8,7 @@ import { env,corsOrigins } from "./config.js";
 import { authRoutes } from "./routes/auth.js";
 import { adminRoutes } from "./routes/admin.js";
 import { gameRoutes } from "./routes/game.js";
+import { worldRoutes } from "./routes/world.js";
 import { playerRoutes } from "./routes/player.js";
 import { organizationLeaderRoutes } from "./routes/organizationLeader.js";
 export function buildApp(){
@@ -23,6 +24,7 @@ export function buildApp(){
  app.get("/health",async()=>({status:"ok",service:"russia-online-rp-api"}));
  app.register(authRoutes,{prefix:"/v1/auth"});
  app.register(gameRoutes,{prefix:"/v1/game"});
+ app.register(worldRoutes,{prefix:"/v1/world"});
  app.register(playerRoutes,{prefix:"/v1/player"});
  app.register(organizationLeaderRoutes,{prefix:"/v1/org-leader"});
  app.register(adminRoutes,{prefix:"/v1/admin"});
