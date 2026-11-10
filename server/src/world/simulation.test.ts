@@ -20,6 +20,10 @@ describe("authoritative movement simulation",()=>{
   const state=simulatePlayerInput(createPlayerState(),{sequence:4,forward:0,strafe:0,turn:0},0.016,1000);
   expect(()=>simulatePlayerInput(state,{sequence:4,forward:1,strafe:0,turn:0},0.016,1016)).toThrow("STALE_INPUT_SEQUENCE");
  });
+ it("rejects server timestamps moving backwards",()=>{
+  const state=simulatePlayerInput(createPlayerState(),{sequence:1,forward:0,strafe:0,turn:0},0.016,1000);
+  expect(()=>simulatePlayerInput(state,{sequence:2,forward:0,strafe:0,turn:0},0.016,999)).toThrow("STALE_SERVER_TIMESTAMP");
+ });
  it("rejects invalid input outside allowed ranges",()=>{
   expect(()=>simulatePlayerInput(createPlayerState(),{sequence:1,forward:2,strafe:0,turn:0},0.016,1000)).toThrow("MOVEMENT_INPUT_OUT_OF_RANGE");
  });
