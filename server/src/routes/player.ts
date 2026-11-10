@@ -6,6 +6,8 @@ const applicationSchema=z.object({organizationCode:z.enum(["MVD","FSB","ARMY","E
 async function requirePlayer(request:import("fastify").FastifyRequest,reply:import("fastify").FastifyReply){
  try{await request.jwtVerify();}catch{return reply.code(401).send({error:"UNAUTHORIZED"});}
  if(request.user.role!=="PLAYER")return reply.code(403).send({error:"PLAYER_SESSION_REQUIRED"});
+ const activeBan=await request.server.prisma.accountBan.findFirst({where:{userId:request.user.sub,status:"ACTIVE"}});
+ if(activeBan)return reply.code(403).send({error:"ACCOUNT_BANNED"});
 }
 async function requireAppealSession(request:import("fastify").FastifyRequest,reply:import("fastify").FastifyReply){
  try{await request.jwtVerify();}catch{return reply.code(401).send({error:"UNAUTHORIZED"});}
