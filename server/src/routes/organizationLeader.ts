@@ -3,7 +3,7 @@ import { z } from "zod";
 import { writeAudit } from "../services/audit.js";
 const reviewSchema=z.object({decision:z.enum(["ACCEPT","REJECT"]),note:z.string().trim().min(5).max(1000)});
 export async function organizationLeaderRoutes(app:FastifyInstance){
- app.get("/:code/applications",{preHandler:async(request,reply)=>{try{await request.jwtVerify();}catch{return reply.code(401).send({error:"UNAUTHORIZED"});}}},async(request,reply)=>{
+ app.get("/:code/applications",{preHandler:async(request,reply)=>{try{await request.jwtVerify();}catch{return reply.code(401).send({error:"UNAUTHORIZED"});}if(request.user.role!=="PLAYER")return reply.code(403).send({error:"PLAYER_SESSION_REQUIRED"});}}},async(request,reply)=>{
   const params=z.object({code:z.string()}).safeParse(request.params);
   if(!params.success)return reply.code(400).send({error:"INVALID_INPUT"});
   const org=await app.prisma.organization.findUnique({where:{code:params.data.code as never}});
