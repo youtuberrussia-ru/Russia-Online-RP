@@ -5,6 +5,7 @@ import { writeAudit } from "../services/audit.js";
 
 async function requireAdmin(request:FastifyRequest,reply:FastifyReply){
  try{await request.jwtVerify();}catch{return reply.code(401).send({error:"UNAUTHORIZED"});}
+ if(request.user.role!=="PLAYER")return reply.code(403).send({error:"INVALID_ADMIN_SESSION"});
  const staff=await request.server.prisma.adminStaff.findUnique({where:{userId:request.user.sub}});
  const isOwner=Boolean(request.server.config.OWNER_USER_ID)&&request.user.sub===request.server.config.OWNER_USER_ID;
  if(!staff?.active&&!isOwner)return reply.code(403).send({error:"ADMIN_ACCESS_REQUIRED"});
@@ -19,6 +20,7 @@ const resolveReportSchema=z.object({status:z.enum(["IN_REVIEW","RESOLVED","REJEC
 const appealDecisionSchema=z.object({decision:z.enum(["APPROVED","DENIED"]),note:z.string().trim().min(5).max(1000)});
 export async function adminRoutes(app:FastifyInstance){
  app.get("/me",{preHandler:[requireAdmin]},async request=>({userId:request.user.sub,role:request.user.sub===app.config.OWNER_USER_ID?"OWNER":request.adminRole}));
+ app.get("/overview",{preHandler:[requireAdmin,permission("dashboard.read")]},async()=>({status:"online",features:["players","economy","organizations","moderation","security"],note:"Live game metrics are connected in a later milestone."}));
  app.get("/staff",{preHandler:[requireAdmin,permission("staff.read")]},async()=>{
   return app.prisma.adminStaff.findMany({where:{active:true},include:{user:{select:{id:true,email:true,profile:{select:{nickname:true}}}}},orderBy:{appointedAt:"asc"}});
  });
@@ -26,10 +28,8 @@ export async function adminRoutes(app:FastifyInstance){
   const query=request.query as {q?:string;take?:string};
   const take=Math.min(Math.max(Number(query.take??"30")||30,1),100);
   const q=query.q?.trim();
-  const users=await app.prisma.user.findMany({where:q?{OR:[{email:{contains:q,mode:"insensitive"}},{profile:{nickname:{contains:q,mode:"insensitive"}}}]}:{},take,orderBy:{createdAt:"desc"},select:{id:true,email:true,createdAt:true,profile:{select:{nickname:true,level:true}},bans:{where:{status:"ACTIVE"},select:{id:true,reason:true,createdAt:true},take:1}}});
-  return users;
+  return app.prisma.user.findMany({where:q?{OR:[{email:{contains:q,mode:"insensitive"}},{profile:{nickname:{contains:q,mode:"insensitive"}}}]}:{},take,orderBy:{createdAt:"desc"},select:{id:true,email:true,createdAt:true,profile:{select:{nickname:true,level:true}},bans:{where:{status:"ACTIVE"},select:{id:true,reason:true,createdAt:true},take:1}}});
  });
- app.get("/overview",{preHandler:[requireAdmin,permission("dashboard.read")]},async()=>({status:"online",features:["players","economy","organizations","moderation","security"],note:"Live game metrics are connected in a later milestone."}));
  app.post("/staff/appoint",{preHandler:[requireAdmin]},async(request,reply)=>{
   const ownerId=app.config.OWNER_USER_ID;
   if(!ownerId||request.user.sub!==ownerId)return reply.code(403).send({error:"OWNER_ONLY"});
@@ -68,7 +68,7 @@ export async function adminRoutes(app:FastifyInstance){
   await writeAudit(app.prisma,{actorId:request.user.sub,action:"PLAYER_REPORT_UPDATED",targetType:"player_report",targetId:report.id,reason:parsed.data.resolution,metadata:{status:parsed.data.status}});
   return reply.send({id:updated.id,status:updated.status,resolution:updated.resolution});
  });
-} app.get("/ban-appeals",{preHandler:[requireAdmin,permission("security.review")]},async()=>{
+ app.get("/ban-appeals",{preHandler:[requireAdmin,permission("security.review")]},async()=>{
   return app.prisma.banAppeal.findMany({where:{status:"PENDING"},include:{user:{select:{id:true,email:true,profile:{select:{nickname:true}}}},ban:true},orderBy:{createdAt:"asc"},take:100});
  });
  app.patch("/ban-appeals/:id",{preHandler:[requireAdmin,permission("security.review")]},async(request,reply)=>{
@@ -85,4 +85,4 @@ export async function adminRoutes(app:FastifyInstance){
   await writeAudit(app.prisma,{actorId:request.user.sub,action:"BAN_APPEAL_REVIEWED",targetType:"ban_appeal",targetId:appeal.id,reason:parsed.data.note,metadata:{decision:parsed.data.decision}});
   return reply.send({id:result.id,status:result.status});
  });
-
+}
