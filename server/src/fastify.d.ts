@@ -6,7 +6,7 @@ declare module "fastify" {
 }
 declare module "@fastify/jwt" {
  interface FastifyJWT {
-  payload: { sub:string; role:string };
-  user: { sub:string; role:string };
+  payload: { sub:string; role:string; scope?:string };
+  user: { sub:string; role:string; scope?:string };
  }
 }
