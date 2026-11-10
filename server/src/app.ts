@@ -18,7 +18,7 @@ export function buildApp(){
  app.register(helmet);
  app.register(cors,{origin:corsOrigins,credentials:true});
  app.register(rateLimit,{max:100,timeWindow:"1 minute"});
- app.register(jwt as never,{secret:env.JWT_SECRET,sign:{issuer:env.JWT_ISSUER,audience:env.JWT_AUDIENCE},verify:{issuer:env.JWT_ISSUER,audience:env.JWT_AUDIENCE}} as never);
+ app.register(jwt as any,{secret:env.JWT_SECRET,sign:{issuer:env.JWT_ISSUER,audience:env.JWT_AUDIENCE},verify:{issuer:env.JWT_ISSUER,audience:env.JWT_AUDIENCE}} as any);
  app.get("/health",async()=>({status:"ok",service:"russia-online-rp-api"}));
  app.register(authRoutes,{prefix:"/v1/auth"});
  app.register(gameRoutes,{prefix:"/v1/game"});
