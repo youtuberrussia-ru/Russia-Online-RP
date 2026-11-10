@@ -6,6 +6,8 @@ import { writeAudit } from "../services/audit.js";
 async function requireAdmin(request:FastifyRequest,reply:FastifyReply){
  try{await request.jwtVerify();}catch{return reply.code(401).send({error:"UNAUTHORIZED"});}
  if(request.user.role!=="PLAYER")return reply.code(403).send({error:"INVALID_ADMIN_SESSION"});
+ const activeBan=await request.server.prisma.accountBan.findFirst({where:{userId:request.user.sub,status:"ACTIVE"}});
+ if(activeBan)return reply.code(403).send({error:"ACCOUNT_BANNED"});
  const staff=await request.server.prisma.adminStaff.findUnique({where:{userId:request.user.sub}});
  const isOwner=Boolean(request.server.config.OWNER_USER_ID)&&request.user.sub===request.server.config.OWNER_USER_ID;
  if(!staff?.active&&!isOwner)return reply.code(403).send({error:"ADMIN_ACCESS_REQUIRED"});
