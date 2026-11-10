@@ -21,6 +21,14 @@ export class WorldSessionManager{
   this.players.set(playerId,next);
   return this.snapshotOne(playerId,next);
  }
+ applyInputAt(playerId:string,input:PlayerInput,nowMs:number){
+  const current=this.players.get(playerId);
+  if(!current)throw new Error("PLAYER_NOT_IN_WORLD");
+  const elapsed=current.lastUpdatedAt===0?0.05:(nowMs-current.lastUpdatedAt)/1000;
+  const next=simulatePlayerInput(current,input,elapsed,nowMs,false);
+  this.players.set(playerId,next);
+  return this.snapshotOne(playerId,next);
+ }
  getSnapshot():WorldPlayerSnapshot[]{
   return [...this.players.entries()].map(([playerId,state])=>this.snapshotOne(playerId,state)).sort((a,b)=>a.playerId.localeCompare(b.playerId));
  }
