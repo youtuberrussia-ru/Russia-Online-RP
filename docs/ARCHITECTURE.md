@@ -5,7 +5,7 @@ RUSSIA ONLINE RP is an original mobile open-world role-play game. Genre conventi
 
 ## Target architecture
 - Android game client: planned Unity 3D client, optimized for low/mid-range devices. The client is presentation and input only.
-- Authoritative game services own player state, movement validation, combat outcomes, vehicles, inventory, organizations and economy. The first pure server-side movement integrator exists in `server/src/world/`; it is not yet connected to realtime sockets or collision geometry.
+- Authoritative game services own player state, movement validation, combat outcomes, vehicles, inventory, organizations and economy. The first server-side movement integrator and in-memory world session manager exist in `server/src/world/`; they are covered by unit tests but are not yet connected to realtime sockets, persistent multi-instance room state or collision geometry.
 - API: TypeScript/Fastify service in server/.
 - Database: PostgreSQL through Prisma. Currency uses integer BigInt units, never floating point.
 - Separate owner/developer, admin and organization-leader experiences.
