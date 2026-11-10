@@ -20,6 +20,13 @@ Base URL in local development: `http://localhost:3000`. Protected endpoints requ
 ## Game catalogue
 - `GET /v1/game/organizations` — public catalogue of the 11 official organizations and configured ranks.
 
+## World session prototype
+- `POST /v1/world/join` — join this API process's in-memory world session; spawn is server-selected.
+- `POST /v1/world/input` — submit sequenced movement axes only (`sequence`, `forward`, `strafe`, `turn`). Position, velocity, elapsed time and sprint state are never accepted from the client; elapsed time is derived from server timestamps.
+- `GET /v1/world/snapshot` — current process-local player snapshots.
+- `POST /v1/world/leave` — leave the process-local session.
+- Important: this is an authenticated HTTP prototype, not realtime multiplayer. Sessions are lost on restart, state is not shared between instances, and collision/vehicle/combat systems plus WebSocket transport are not implemented.
+
 ## Organization leader
 - `GET /v1/org-leader/:code/applications` — pending applications; requires active rank 10 or 11 membership in that organization.
 - `POST /v1/org-leader/:code/applications/:id/review` — body: `{ "decision": "ACCEPT|REJECT", "note": "..." }`; requires active rank 10 or 11 membership.
