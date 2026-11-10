@@ -218,6 +218,7 @@ model DailyRewardClaim {
   userId    String
   dayKey    String
   amount    BigInt
+  streak    Int      @default(1)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
