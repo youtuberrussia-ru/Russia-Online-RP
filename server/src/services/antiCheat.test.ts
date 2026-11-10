@@ -11,6 +11,6 @@ describe("confirmed-cheat ban safeguards",()=>{
   await expect(applyConfirmedCheatBan(prisma,{userId:"user-1",evidence:[evidence,evidence]})).rejects.toThrow("at least two independent");
  });
  it("rejects non-corroborated signals",async()=>{
-  await expect(applyConfirmedCheatBan(prisma,{userId:"user-1",evidence:[evidence,{...evidence,source:"combat-validator",confidence:"suspicious" as never}]})).rejects.toThrow("Unconfirmed evidence");
+  await expect(applyConfirmedCheatBan(prisma,{userId:"user-1",evidence:[evidence,{...evidence,source:"combat-validator",serverTraceId:"trace-2",confidence:"suspicious" as never}]})).rejects.toThrow("Unconfirmed evidence");
  });
 });
