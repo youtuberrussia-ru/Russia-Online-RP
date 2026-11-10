@@ -8,6 +8,7 @@ import { env,corsOrigins } from "./config.js";
 import { authRoutes } from "./routes/auth.js";
 import { adminRoutes } from "./routes/admin.js";
 import { gameRoutes } from "./routes/game.js";
+import { playerRoutes } from "./routes/player.js";
 export function buildApp(){
  const app=Fastify({logger:{level:env.NODE_ENV==="production"?"info":"debug"},bodyLimit:64*1024,trustProxy:false});
  const prisma=new PrismaClient();
@@ -21,6 +22,7 @@ export function buildApp(){
  app.get("/health",async()=>({status:"ok",service:"russia-online-rp-api"}));
  app.register(authRoutes,{prefix:"/v1/auth"});
  app.register(gameRoutes,{prefix:"/v1/game"});
+ app.register(playerRoutes,{prefix:"/v1/player"});
  app.register(adminRoutes,{prefix:"/v1/admin"});
  app.addHook("onClose",async()=>prisma.$disconnect());
  return app;
