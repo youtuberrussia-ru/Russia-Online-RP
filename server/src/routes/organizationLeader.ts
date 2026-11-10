@@ -1,9 +1,13 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance,FastifyRequest,FastifyReply } from "fastify";
 import { z } from "zod";
 import { writeAudit } from "../services/audit.js";
 const reviewSchema=z.object({decision:z.enum(["ACCEPT","REJECT"]),note:z.string().trim().min(5).max(1000)});
+async function requirePlayer(request:FastifyRequest,reply:FastifyReply){
+ try{await request.jwtVerify();}catch{return reply.code(401).send({error:"UNAUTHORIZED"});}
+ if(request.user.role!=="PLAYER")return reply.code(403).send({error:"PLAYER_SESSION_REQUIRED"});
+}
 export async function organizationLeaderRoutes(app:FastifyInstance){
- app.get("/:code/applications",{preHandler:async(request,reply)=>{try{await request.jwtVerify();}catch{return reply.code(401).send({error:"UNAUTHORIZED"});}if(request.user.role!=="PLAYER")return reply.code(403).send({error:"PLAYER_SESSION_REQUIRED"});}}},async(request,reply)=>{
+ app.get("/:code/applications",{preHandler:requirePlayer},async(request,reply)=>{
   const params=z.object({code:z.string()}).safeParse(request.params);
   if(!params.success)return reply.code(400).send({error:"INVALID_INPUT"});
   const org=await app.prisma.organization.findUnique({where:{code:params.data.code as never}});
@@ -14,7 +18,7 @@ export async function organizationLeaderRoutes(app:FastifyInstance){
   if(!leadership)return reply.code(403).send({error:"LEADER_ACCESS_REQUIRED"});
   return app.prisma.organizationApplication.findMany({where:{organizationId:org.id,status:"PENDING"},include:{profile:{select:{nickname:true,level:true}}},orderBy:{createdAt:"asc"},take:100});
  });
- app.post("/:code/applications/:id/review",{preHandler:async(request,reply)=>{try{await request.jwtVerify();}catch{return reply.code(401).send({error:"UNAUTHORIZED"});}}},async(request,reply)=>{
+ app.post("/:code/applications/:id/review",{preHandler:requirePlayer},async(request,reply)=>{
   const params=z.object({code:z.string(),id:z.string()}).safeParse(request.params);
   const parsed=reviewSchema.safeParse(request.body);
   if(!params.success||!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
