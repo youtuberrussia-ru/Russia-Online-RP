@@ -4,7 +4,7 @@ import argon2 from "argon2";
 const registerSchema=z.object({email:z.string().email().max(254).transform(v=>v.toLowerCase().trim()),password:z.string().min(10).max(128),nickname:z.string().trim().min(3).max(20).regex(/^[a-zA-Zа-яА-ЯёЁ0-9_]+$/)});
 const loginSchema=z.object({email:z.string().email().max(254).transform(v=>v.toLowerCase().trim()),password:z.string().min(1).max(128)});
 export async function authRoutes(app:FastifyInstance){
- app.post("/register",async(request,reply)=>{
+ app.post("/register",{config:{rateLimit:{max:3,timeWindow:"1 hour"}}},async(request,reply)=>{
   const parsed=registerSchema.safeParse(request.body);
   if(!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
   const {email,password,nickname}=parsed.data;
@@ -15,7 +15,7 @@ export async function authRoutes(app:FastifyInstance){
    return reply.code(201).send({user,token});
   }catch{return reply.code(409).send({error:"EMAIL_OR_NICKNAME_TAKEN"});}
  });
- app.post("/login",async(request,reply)=>{
+ app.post("/login",{config:{rateLimit:{max:5,timeWindow:"15 minutes"}}},async(request,reply)=>{
   const parsed=loginSchema.safeParse(request.body);
   if(!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
   const user=await app.prisma.user.findUnique({where:{email:parsed.data.email}});
