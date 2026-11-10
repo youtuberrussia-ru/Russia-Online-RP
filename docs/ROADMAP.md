@@ -6,7 +6,7 @@
 - [x] Seed the 11 agreed official organizations with 11 ranks each.
 - [x] Initial registration/login and organization catalogue APIs.
 - [x] Server-side admin permission boundary and initial tests.
-- [x] Economy ledger primitive and conservative anti-cheat ban service.
+- [x] Economy ledger primitive and conservative anti-cheat ban service.\n- [x] Initial server-authoritative movement integrator with input validation and unit tests.
 - [ ] Run CI, Prisma validation, typecheck and tests; fix every reported issue.
 
 ## Phase 1 — accounts and operations
@@ -17,7 +17,7 @@
 - [ ] Organization interviews, hiring/firing, rank changes, salaries, duty, fleet, storage and history.
 
 ## Phase 2 — game services
-- [ ] Authoritative player sessions and realtime transport.
+- [ ] Authoritative player sessions and realtime transport (movement integrator exists; socket transport and room lifecycle remain).
 - [ ] Movement, vehicle, combat, inventory and interaction validation.
 - [ ] Bank, jobs, businesses, properties, families and criminal factions.
 - [ ] Daily/weekly tasks, achievements and server-controlled login rewards.
