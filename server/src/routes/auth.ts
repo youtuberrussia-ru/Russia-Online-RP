@@ -21,7 +21,10 @@ export async function authRoutes(app:FastifyInstance){
   const user=await app.prisma.user.findUnique({where:{email:parsed.data.email}});
   if(!user||!(await argon2.verify(user.passwordHash,parsed.data.password)))return reply.code(401).send({error:"INVALID_CREDENTIALS"});
   const ban=await app.prisma.accountBan.findFirst({where:{userId:user.id,status:"ACTIVE"}});
-  if(ban){\n   const appealToken=app.jwt.sign({sub:user.id,role:"BANNED_APPEAL",scope:"ban:appeal"},{expiresIn:"20m"});\n   return reply.code(403).send({error:"ACCOUNT_BANNED",reason:ban.reason,appealToken,canAppeal:true});\n  }
+  if(ban){
+   const appealToken=app.jwt.sign({sub:user.id,role:"BANNED_APPEAL",scope:"ban:appeal"},{expiresIn:"20m"});
+   return reply.code(403).send({error:"ACCOUNT_BANNED",reason:ban.reason,appealToken,canAppeal:true});
+  }
   const token=app.jwt.sign({sub:user.id,role:"PLAYER"},{expiresIn:"2h"});
   return reply.send({user:{id:user.id,email:user.email},token});
  });
