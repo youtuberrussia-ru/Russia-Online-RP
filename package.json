@@ -1,0 +1,1 @@
+{"name":"russia-online-rp","private":true,"version":"0.1.0","workspaces":["server"],"scripts":{"build":"npm --workspace server run build","typecheck":"npm --workspace server run typecheck","test":"npm --workspace server run test","db:generate":"npm --workspace server run db:generate","db:validate":"npm --workspace server run db:validate"},"engines":{"node":">=22"}}

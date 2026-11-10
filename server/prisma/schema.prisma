@@ -1,0 +1,116 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+enum AdminRole { GA ZGA SENIOR_ADMIN ADMIN SENIOR_MODERATOR MODERATOR JUNIOR_MODERATOR }
+enum OrgCode { MVD FSB ARMY EMERCOM HEALTH PROSECUTOR GOVERNMENT TRAFFIC_POLICE MEDIA FSIN CENTRAL_BANK }
+enum BanStatus { ACTIVE REVOKED }
+model User {
+ id String @id @default(cuid())
+ email String @unique
+ passwordHash String
+ emailVerified Boolean @default(false)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ profile PlayerProfile?
+ wallet Wallet?
+ adminStaff AdminStaff?
+ auditActor AdminAuditLog[] @relation("AuditActor")
+ bans AccountBan[]
+}
+model PlayerProfile {
+ id String @id @default(cuid())
+ userId String @unique
+ nickname String @unique
+ level Int @default(1)
+ experience Int @default(0)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ memberships OrgMembership[]
+}
+model Wallet {
+ id String @id @default(cuid())
+ userId String @unique
+ balance BigInt @default(0)
+ updatedAt DateTime @updatedAt
+ user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ ledger EconomyTransaction[]
+}
+model EconomyTransaction {
+ id String @id @default(cuid())
+ walletId String
+ amount BigInt
+ balanceAfter BigInt
+ reason String
+ idempotencyKey String @unique
+ createdAt DateTime @default(now())
+ wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+ @@index([walletId, createdAt])
+}
+model AdminStaff {
+ id String @id @default(cuid())
+ userId String @unique
+ role AdminRole
+ active Boolean @default(true)
+ appointedBy String
+ appointedAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+model AdminAuditLog {
+ id String @id @default(cuid())
+ actorId String
+ action String
+ targetType String
+ targetId String
+ reason String
+ metadata Json?
+ createdAt DateTime @default(now())
+ actor User @relation("AuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+ @@index([actorId, createdAt])
+ @@index([targetType, targetId, createdAt])
+}
+model Organization {
+ id String @id @default(cuid())
+ code OrgCode @unique
+ name String
+ description String
+ createdAt DateTime @default(now())
+ ranks OrganizationRank[]
+ members OrgMembership[]
+}
+model OrganizationRank {
+ id String @id @default(cuid())
+ organizationId String
+ rank Int
+ title String
+ salary BigInt @default(0)
+ permissions String[]
+ organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+ memberships OrgMembership[]
+ @@unique([organizationId, rank])
+}
+model OrgMembership {
+ id String @id @default(cuid())
+ profileId String
+ organizationId String
+ rankId String
+ joinedAt DateTime @default(now())
+ active Boolean @default(true)
+ profile PlayerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+ organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+ rank OrganizationRank @relation(fields: [rankId], references: [id], onDelete: Restrict)
+ @@index([organizationId, active])
+ @@unique([profileId, organizationId])
+}
+model AccountBan {
+ id String @id @default(cuid())
+ userId String
+ status BanStatus @default(ACTIVE)
+ reason String
+ evidence Json
+ createdAt DateTime @default(now())
+ revokedAt DateTime?
+ revokedBy String?
+ user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ @@index([userId, status])
+}
