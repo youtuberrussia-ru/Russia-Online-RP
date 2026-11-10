@@ -9,6 +9,7 @@ import { authRoutes } from "./routes/auth.js";
 import { adminRoutes } from "./routes/admin.js";
 import { gameRoutes } from "./routes/game.js";
 import { playerRoutes } from "./routes/player.js";
+import { organizationLeaderRoutes } from "./routes/organizationLeader.js";
 export function buildApp(){
  const app=Fastify({logger:{level:env.NODE_ENV==="production"?"info":"debug"},bodyLimit:64*1024,trustProxy:false});
  const prisma=new PrismaClient();
@@ -23,6 +24,7 @@ export function buildApp(){
  app.register(authRoutes,{prefix:"/v1/auth"});
  app.register(gameRoutes,{prefix:"/v1/game"});
  app.register(playerRoutes,{prefix:"/v1/player"});
+ app.register(organizationLeaderRoutes,{prefix:"/v1/org-leader"});
  app.register(adminRoutes,{prefix:"/v1/admin"});
  app.addHook("onClose",async()=>prisma.$disconnect());
  return app;
