@@ -11,5 +11,5 @@ export async function applyWalletChange(prisma:PrismaClient,input:{userId:string
   if(next<0n)throw new Error("Insufficient funds.");
   await tx.wallet.update({where:{id:wallet.id},data:{balance:next}});
   return tx.economyTransaction.create({data:{walletId:wallet.id,amount:input.amount,balanceAfter:next,reason:input.reason,idempotencyKey:input.idempotencyKey}});
- });
+ },{isolationLevel:"Serializable"});
 }
