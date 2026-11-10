@@ -19,6 +19,16 @@ const resolveReportSchema=z.object({status:z.enum(["IN_REVIEW","RESOLVED","REJEC
 const appealDecisionSchema=z.object({decision:z.enum(["APPROVED","DENIED"]),note:z.string().trim().min(5).max(1000)});
 export async function adminRoutes(app:FastifyInstance){
  app.get("/me",{preHandler:[requireAdmin]},async request=>({userId:request.user.sub,role:request.user.sub===app.config.OWNER_USER_ID?"OWNER":request.adminRole}));
+ app.get("/staff",{preHandler:[requireAdmin,permission("staff.read")]},async()=>{
+  return app.prisma.adminStaff.findMany({where:{active:true},include:{user:{select:{id:true,email:true,profile:{select:{nickname:true}}}}},orderBy:{appointedAt:"asc"}});
+ });
+ app.get("/players",{preHandler:[requireAdmin,permission("players.read")]},async(request)=>{
+  const query=request.query as {q?:string;take?:string};
+  const take=Math.min(Math.max(Number(query.take??"30")||30,1),100);
+  const q=query.q?.trim();
+  const users=await app.prisma.user.findMany({where:q?{OR:[{email:{contains:q,mode:"insensitive"}},{profile:{nickname:{contains:q,mode:"insensitive"}}}]}:{},take,orderBy:{createdAt:"desc"},select:{id:true,email:true,createdAt:true,profile:{select:{nickname:true,level:true}},bans:{where:{status:"ACTIVE"},select:{id:true,reason:true,createdAt:true},take:1}}});
+  return users;
+ });
  app.get("/overview",{preHandler:[requireAdmin,permission("dashboard.read")]},async()=>({status:"online",features:["players","economy","organizations","moderation","security"],note:"Live game metrics are connected in a later milestone."}));
  app.post("/staff/appoint",{preHandler:[requireAdmin]},async(request,reply)=>{
   const ownerId=app.config.OWNER_USER_ID;
