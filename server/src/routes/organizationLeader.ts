@@ -5,6 +5,8 @@ const reviewSchema=z.object({decision:z.enum(["ACCEPT","REJECT"]),note:z.string(
 async function requirePlayer(request:FastifyRequest,reply:FastifyReply){
  try{await request.jwtVerify();}catch{return reply.code(401).send({error:"UNAUTHORIZED"});}
  if(request.user.role!=="PLAYER")return reply.code(403).send({error:"PLAYER_SESSION_REQUIRED"});
+ const activeBan=await request.server.prisma.accountBan.findFirst({where:{userId:request.user.sub,status:"ACTIVE"}});
+ if(activeBan)return reply.code(403).send({error:"ACCOUNT_BANNED"});
 }
 export async function organizationLeaderRoutes(app:FastifyInstance){
  app.get("/:code/applications",{preHandler:requirePlayer},async(request,reply)=>{
