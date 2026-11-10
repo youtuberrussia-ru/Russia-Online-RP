@@ -25,7 +25,7 @@ Base URL in local development: `http://localhost:3000`. Protected endpoints requ
 
 ## Admin
 - `GET /v1/admin/me` — current admin/owner identity.
-- `GET /v1/admin/overview` — initial operational summary.
+- `GET /v1/admin/overview` — initial operational summary.\n- `GET /v1/admin/staff` — permission-gated active staff directory.\n- `GET /v1/admin/players?q=nickname-or-email&take=30` — permission-gated player search.
 - `POST /v1/admin/staff/appoint` — owner only; body: `{ "userId", "role", "reason" }`.
 - `POST /v1/admin/staff/revoke` — owner only; body: `{ "userId", "reason" }`.
 - `GET /v1/admin/reports?status=OPEN` — permission-gated report queue.
