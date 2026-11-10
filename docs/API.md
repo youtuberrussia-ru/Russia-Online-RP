@@ -14,7 +14,7 @@ Base URL in local development: `http://localhost:3000`. Protected endpoints requ
 - `GET /v1/player/me` — authenticated account, profile, active organization memberships and wallet balance.
 - `POST /v1/player/reports` — authenticated report. Body: `{ "category": "PLAYER|BUG|CHEATING|OTHER", "description": "...", "targetId": "optional" }`.
 - `POST /v1/player/organizations/applications` — authenticated application. Body: `{ "organizationCode": "...", "answers": { "question": "answer" } }`.
-- `POST /v1/player/daily-rewards/claim` — authenticated daily reward claim. Server determines the UTC day and reward; duplicate same-day claims are blocked.
+- `POST /v1/player/daily-rewards/claim` — authenticated daily reward claim. Server determines the UTC day and reward; duplicate same-day claims are blocked.\n- `POST /v1/player/ban-appeals` — authenticated appeal for an active ban; one pending appeal per ban.
 
 ## Game catalogue
 - `GET /v1/game/organizations` — public catalogue of the 11 official organizations and configured ranks.
@@ -29,7 +29,7 @@ Base URL in local development: `http://localhost:3000`. Protected endpoints requ
 - `POST /v1/admin/staff/appoint` — owner only; body: `{ "userId", "role", "reason" }`.
 - `POST /v1/admin/staff/revoke` — owner only; body: `{ "userId", "reason" }`.
 - `GET /v1/admin/reports?status=OPEN` — permission-gated report queue.
-- `PATCH /v1/admin/reports/:id` — permission-gated review; body: `{ "status": "IN_REVIEW|RESOLVED|REJECTED", "resolution": "..." }`.
+- `PATCH /v1/admin/reports/:id` — permission-gated review; body: `{ "status": "IN_REVIEW|RESOLVED|REJECTED", "resolution": "..." }`.\n- `GET /v1/admin/ban-appeals` — security-review permission queue.\n- `PATCH /v1/admin/ban-appeals/:id` — approve or deny an appeal; approved appeals revoke the related active ban and write an audit entry.
 
 ## Security notes
 - The current JWT setup is a development foundation. Add MFA for privileged accounts, verified email, refresh-token rotation/revocation, account recovery and production secret management before launch.
