@@ -12,6 +12,7 @@ export function createPlayerState(position:WorldPosition={x:0,y:0,z:0,yaw:0}):Au
 /** Integrates input on the server. Client-supplied positions, velocities and rewards are never accepted. */
 export function simulatePlayerInput(state:AuthoritativePlayerState,input:PlayerInput,deltaSeconds:number,nowMs:number,running=false):AuthoritativePlayerState{
  if(!Number.isSafeInteger(input.sequence)||input.sequence<=state.lastInputSequence)throw new Error("STALE_INPUT_SEQUENCE");
+ if(nowMs<state.lastUpdatedAt)throw new Error("STALE_SERVER_TIMESTAMP");
  for(const value of [input.forward,input.strafe,input.turn,deltaSeconds,nowMs])if(!Number.isFinite(value))throw new Error("INVALID_MOVEMENT_INPUT");
  if(Math.abs(input.forward)>1||Math.abs(input.strafe)>1||Math.abs(input.turn)>1)throw new Error("MOVEMENT_INPUT_OUT_OF_RANGE");
  const dt=clamp(deltaSeconds,0,0.05);
