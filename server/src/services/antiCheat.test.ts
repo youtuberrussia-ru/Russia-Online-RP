@@ -7,7 +7,10 @@ describe("confirmed-cheat ban safeguards",()=>{
  it("rejects a single signal before touching storage",async()=>{
   await expect(applyConfirmedCheatBan(prisma,{userId:"user-1",evidence:[evidence]})).rejects.toThrow("at least two independent");
  });
- it("rejects duplicate evidence from the same validator and trace",async()=>{\n  await expect(applyConfirmedCheatBan(prisma,{userId:"user-1",evidence:[evidence,evidence]})).rejects.toThrow("at least two independent");\n });\n it("rejects non-corroborated signals",async()=>{
+ it("rejects duplicate evidence from the same validator and trace",async()=>{
+  await expect(applyConfirmedCheatBan(prisma,{userId:"user-1",evidence:[evidence,evidence]})).rejects.toThrow("at least two independent");
+ });
+ it("rejects non-corroborated signals",async()=>{
   await expect(applyConfirmedCheatBan(prisma,{userId:"user-1",evidence:[evidence,{...evidence,source:"combat-validator",confidence:"suspicious" as never}]})).rejects.toThrow("Unconfirmed evidence");
  });
 });
