@@ -40,7 +40,8 @@ export async function playerRoutes(app:FastifyInstance){
    return reply.code(status).send({error:code});
   }
  });
-\n app.get("/me",{preHandler:requirePlayer},async(request,reply)=>{
+
+ app.get("/me",{preHandler:requirePlayer},async(request,reply)=>{
   const user=await app.prisma.user.findUnique({where:{id:request.user.sub},select:{id:true,email:true,createdAt:true,profile:{include:{memberships:{where:{active:true},include:{organization:true,rank:true}}}},wallet:{select:{balance:true}}}});
   if(!user)return reply.code(404).send({error:"USER_NOT_FOUND"});
   return {...user,wallet:user.wallet?{balance:user.wallet.balance.toString()}:null};
