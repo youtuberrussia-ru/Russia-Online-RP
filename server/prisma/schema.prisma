@@ -68,6 +68,8 @@ model PlayerProfile {
   vehicles     PlayerVehicle[]
   properties   PlayerProperty[]
   propertyAccess PropertyAccess[]
+  ownedBusinesses Business[] @relation("BusinessOwner")
+  businessEmployment BusinessEmployee[]
   jobShifts    JobShift[]
 }
 
@@ -385,4 +387,62 @@ model PropertyAccess {
 
   @@unique([propertyId, granteeProfileId])
   @@index([granteeProfileId, updatedAt])
+}
+
+
+enum BusinessStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+model Business {
+  id              String         @id @default(cuid())
+  businessCode    String         @unique
+  displayName     String
+  businessType    String
+  district        String
+  ownerProfileId  String
+  purchaseKey     String         @unique
+  purchasedPrice  BigInt
+  cashBalance     BigInt         @default(0)
+  status          BusinessStatus @default(ACTIVE)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  owner           PlayerProfile  @relation("BusinessOwner", fields: [ownerProfileId], references: [id], onDelete: Restrict)
+  employees       BusinessEmployee[]
+  ledger          BusinessLedger[]
+
+  @@index([ownerProfileId, status])
+  @@index([businessType, district])
+}
+
+model BusinessEmployee {
+  id              String        @id @default(cuid())
+  businessId      String
+  profileId       String
+  jobTitle        String        @default("Сотрудник")
+  canManageStaff  Boolean       @default(false)
+  canManageStock  Boolean       @default(false)
+  canManageCash   Boolean       @default(false)
+  hiredAt         DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  business        Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  profile         PlayerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, profileId])
+  @@index([profileId, hiredAt])
+}
+
+model BusinessLedger {
+  id             String   @id @default(cuid())
+  businessId     String
+  kind           String
+  amount         BigInt
+  balanceAfter   BigInt
+  reason         String
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
 }
