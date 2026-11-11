@@ -29,7 +29,9 @@
 - [ ] Movement, combat, inventory and interaction validation.
 - [x] Initial server-controlled job catalogue, shift lifecycle and wallet-ledger payouts with duration and daily-income caps.
 - [x] Player bank accounts, cash deposits/withdrawals, player-to-player transfers and separate idempotent ledgers.
-- [ ] Businesses, properties, families and criminal factions.
+- [x] Initial property catalogue, player ownership, atomic idempotent purchases and economy-ledger integration.
+- [ ] Property interiors, storage, keys/access sharing, maintenance, taxes, rent and ownership transfers.
+- [ ] Businesses, families and criminal factions.
 - [ ] Daily/weekly tasks, achievements and server-controlled login rewards.
 - [ ] Events, weather, world clock, leaderboards and in-game phone.
 
