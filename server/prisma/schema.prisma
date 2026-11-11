@@ -412,6 +412,7 @@ model Business {
   employees       BusinessEmployee[]
   ledger          BusinessLedger[]
   stockItems      BusinessStockItem[]
+  sales           BusinessSale[]
 
   @@index([ownerProfileId, status])
   @@index([businessType, district])
