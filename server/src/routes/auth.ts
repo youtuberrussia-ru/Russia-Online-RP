@@ -10,7 +10,7 @@ export async function authRoutes(app:FastifyInstance){
   const {email,password,nickname}=parsed.data;
   const passwordHash=await argon2.hash(password,{type:argon2.argon2id});
   try{
-   const user=await app.prisma.user.create({data:{email,passwordHash,profile:{create:{nickname}},wallet:{create:{balance:0n}}},select:{id:true,email:true,createdAt:true}});
+   const user=await app.prisma.user.create({data:{email,passwordHash,profile:{create:{nickname}},wallet:{create:{balance:0n}},bankAccount:{create:{balance:0n}}},select:{id:true,email:true,createdAt:true}});
    const token=app.jwt.sign({sub:user.id,role:"PLAYER"},{expiresIn:"2h"});
    return reply.code(201).send({user,token});
   }catch{return reply.code(409).send({error:"EMAIL_OR_NICKNAME_TAKEN"});}
