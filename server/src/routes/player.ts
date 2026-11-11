@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { claimDailyReward } from "../services/dailyRewards.js";
 import { purchasePlayerVehicle } from "../services/vehiclePurchases.js";
+import { cancelJobShift, finishJobShift, JOBS, startJobShift } from "../services/jobs.js";
 const reportSchema=z.object({targetId:z.string().optional(),category:z.enum(["PLAYER","BUG","CHEATING","OTHER"]),description:z.string().trim().min(20).max(2000)});
 const applicationSchema=z.object({organizationCode:z.enum(["MVD","FSB","ARMY","EMERCOM","HEALTH","PROSECUTOR","GOVERNMENT","TRAFFIC_POLICE","MEDIA","FSIN","CENTRAL_BANK"]),answers:z.record(z.string(),z.string().max(1000)).refine(v=>Object.keys(v).length>0)});
 async function requirePlayer(request:import("fastify").FastifyRequest,reply:import("fastify").FastifyReply){
@@ -16,6 +17,46 @@ async function requireAppealSession(request:import("fastify").FastifyRequest,rep
 }
 export async function playerRoutes(app:FastifyInstance){
 
+ app.get("/jobs",{preHandler:requirePlayer},async()=>{
+  return JOBS.map(job=>({code:job.code,title:job.title,description:job.description,hourlyRate:job.hourlyRate.toString()}));
+ });
+ app.get("/jobs/shifts",{preHandler:requirePlayer},async(request,reply)=>{
+  const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});
+  if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  const shifts=await app.prisma.jobShift.findMany({where:{profileId:profile.id},orderBy:{startedAt:"desc"},take:20});
+  return shifts.map(shift=>({id:shift.id,jobCode:shift.jobCode,status:shift.status,startedAt:shift.startedAt,endedAt:shift.endedAt,payout:shift.payout.toString()}));
+ });
+ app.post("/jobs/shifts/start",{preHandler:requirePlayer,config:{rateLimit:{max:5,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const parsed=z.object({jobCode:z.string().min(2).max(30)}).strict().safeParse(request.body);
+  if(!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  try{return reply.code(201).send(await startJobShift(app.prisma,request.user.sub,parsed.data.jobCode));}
+  catch(error){
+   const code=error instanceof Error?error.message:"JOB_START_FAILED";
+   const status=code==="JOB_NOT_FOUND"?404:code==="PROFILE_NOT_FOUND"?404:409;
+   return reply.code(status).send({error:code});
+  }
+ });
+ app.post("/jobs/shifts/:id/finish",{preHandler:requirePlayer,config:{rateLimit:{max:5,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const params=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);
+  const parsed=z.object({requestId:z.string().uuid()}).strict().safeParse(request.body);
+  if(!params.success||!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  try{return reply.send(await finishJobShift(app.prisma,request.user.sub,params.data.id,parsed.data.requestId));}
+  catch(error){
+   const code=error instanceof Error?error.message:"JOB_FINISH_FAILED";
+   const status=code==="JOB_SHIFT_NOT_FOUND"||code==="PROFILE_NOT_FOUND"||code==="JOB_NOT_FOUND"?404:code==="SHIFT_TOO_SHORT"||code==="DAILY_JOB_LIMIT_REACHED"?409:400;
+   return reply.code(status).send({error:code});
+  }
+ });
+ app.post("/jobs/shifts/:id/cancel",{preHandler:requirePlayer},async(request,reply)=>{
+  const params=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);
+  if(!params.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  try{return reply.send(await cancelJobShift(app.prisma,request.user.sub,params.data.id));}
+  catch(error){
+   const code=error instanceof Error?error.message:"JOB_CANCEL_FAILED";
+   const status=code==="ACTIVE_JOB_SHIFT_NOT_FOUND"?404:409;
+   return reply.code(status).send({error:code});
+  }
+ });
  app.get("/vehicles",{preHandler:requirePlayer},async(request,reply)=>{
   const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});
   if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
