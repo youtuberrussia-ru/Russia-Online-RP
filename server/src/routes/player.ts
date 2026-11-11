@@ -4,6 +4,7 @@ import { claimDailyReward } from "../services/dailyRewards.js";
 import { purchasePlayerVehicle } from "../services/vehiclePurchases.js";
 import { cancelJobShift, finishJobShift, JOBS, startJobShift } from "../services/jobs.js";
 import { depositToBank, getBankAccount, transferBankFunds, withdrawFromBank } from "../services/banking.js";
+import { parkVehicle, takeVehicleOut } from "../services/vehicleLifecycle.js";
 const reportSchema=z.object({targetId:z.string().optional(),category:z.enum(["PLAYER","BUG","CHEATING","OTHER"]),description:z.string().trim().min(20).max(2000)});
 const applicationSchema=z.object({organizationCode:z.enum(["MVD","FSB","ARMY","EMERCOM","HEALTH","PROSECUTOR","GOVERNMENT","TRAFFIC_POLICE","MEDIA","FSIN","CENTRAL_BANK"]),answers:z.record(z.string(),z.string().max(1000)).refine(v=>Object.keys(v).length>0)});
 async function requirePlayer(request:import("fastify").FastifyRequest,reply:import("fastify").FastifyReply){
@@ -94,6 +95,26 @@ export async function playerRoutes(app:FastifyInstance){
   catch(error){
    const code=error instanceof Error?error.message:"JOB_CANCEL_FAILED";
    const status=code==="ACTIVE_JOB_SHIFT_NOT_FOUND"?404:409;
+   return reply.code(status).send({error:code});
+  }
+ });
+ app.post("/vehicles/:id/take-out",{preHandler:requirePlayer,config:{rateLimit:{max:10,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const params=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);
+  if(!params.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  try{return reply.send(await takeVehicleOut(app.prisma,request.user.sub,params.data.id));}
+  catch(error){
+   const code=error instanceof Error?error.message:"VEHICLE_SPAWN_FAILED";
+   const status=code==="PROFILE_NOT_FOUND"||code==="VEHICLE_NOT_FOUND"?404:409;
+   return reply.code(status).send({error:code});
+  }
+ });
+ app.post("/vehicles/:id/park",{preHandler:requirePlayer,config:{rateLimit:{max:10,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const params=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);
+  if(!params.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  try{return reply.send(await parkVehicle(app.prisma,request.user.sub,params.data.id));}
+  catch(error){
+   const code=error instanceof Error?error.message:"VEHICLE_PARK_FAILED";
+   const status=code==="PROFILE_NOT_FOUND"||code==="VEHICLE_NOT_FOUND"?404:409;
    return reply.code(status).send({error:code});
   }
  });
