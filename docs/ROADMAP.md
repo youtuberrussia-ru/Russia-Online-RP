@@ -22,7 +22,7 @@
 
 ## Phase 2 — game services
 - [ ] Authoritative player sessions and realtime transport (movement integrator exists; socket transport and room lifecycle remain).
-- [ ] Movement, vehicle, combat, inventory and interaction validation.
+- [x] Initial vehicle catalogue, player garage persistence and atomic idempotent purchases with wallet ledger integration.\n- [ ] Vehicle spawning, parking, garage locations, ownership transfers, fuel, damage and server-authoritative driving.\n- [ ] Movement, combat, inventory and interaction validation.
 - [ ] Bank, jobs, businesses, properties, families and criminal factions.
 - [ ] Daily/weekly tasks, achievements and server-controlled login rewards.
 - [ ] Events, weather, world clock, leaderboards and in-game phone.
