@@ -7,7 +7,7 @@ An original Android-first open-world role-play game project. The repository is b
 - Original map, branding, art, interface, writing and gameplay; no copying protected competitor assets.
 - One shared launch world and economy, with an architecture that can scale later.
 - Server-authoritative player state, movement, combat and economy.
-- Fair progression without donations or pay-to-win purchases in the current design.
+- Optional donations and a separate transparent store are planned; paid items must remain cosmetic or convenience-focused, never pay-to-win.
 - Optimized Android client targeting low- and mid-range devices.
 - Separate owner/developer, admin and organization-leader permissions.
 - Transparent moderation, evidence review and appeals.
@@ -43,7 +43,7 @@ This is an active backend foundation, **not yet a playable game or production-re
 
 Do not deploy with example secrets. Do not set `OWNER_USER_ID` until the intended owner account exists and has been independently verified.
 
-## Documentation
+## Store preview\n\nA separate static mini-store is published through GitHub Pages. The catalogue is a preview only: checkout and real-money payments remain disabled until an eligible adult account holder completes the required provider, legal, privacy, refund and tax setup.\n\n## Documentation
 
 - `docs/GAME_DESIGN.md` — agreed gameplay and organization baseline.
 - `docs/ARCHITECTURE.md` — technical architecture and trust boundaries.

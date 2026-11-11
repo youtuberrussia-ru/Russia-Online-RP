@@ -11,7 +11,7 @@ RUSSIA ONLINE RP is an original mobile open-world role-play game. Genre conventi
 - Separate owner/developer, admin and organization-leader experiences.
 - Community: website, forum/community, wiki, status page, Telegram news/support/bot. Discord is excluded.
 
-## Security boundaries
+## Store and paid entitlements\n- The public mini-store is static and must never contain secrets or payment credentials.\n- Store prices and entitlements are ultimately authoritative on the backend; client or browser callbacks cannot grant purchases.\n- A future payment integration must verify signed provider webhooks server-side, use idempotent order processing, record refunds/chargebacks and grant only the exact purchased entitlement.\n- Until a qualified adult account holder has arranged provider eligibility, legal terms, privacy, refunds and tax handling, the public catalogue is preview-only and no payment is collected.\n\n## Security boundaries
 1. Passwords use Argon2id hashes; never store or log plaintext passwords.
 2. Short-lived sessions; privileged access must add MFA before production.
 3. Every privileged action is checked server-side.

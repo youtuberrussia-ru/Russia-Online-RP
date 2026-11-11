@@ -35,8 +35,12 @@
 - [ ] Property interiors, physical storage inventory, maintenance, taxes, rent and ownership transfers.
 - [x] Initial business catalogue, unique ownership, atomic idempotent purchases and wallet-ledger integration.
 - [x] Business employee roster, hiring/dismissal, owner-assigned staff/stock/cash permissions and audited changes; delegated managers cannot grant elevated permissions or dismiss privileged staff.
-- [x] Initial business stock inventory, server-priced restocking from business cash, and player purchases with atomic stock/wallet/business-ledger updates and idempotency.\n- [x] Monthly salaries, rent and tax policy, paid business expenses, atomic 30-day settlements and financial reports.\n- [ ] Supplier contracts, business cash withdrawal/deposit controls, automatic scheduled settlements and in-world business interactions.
-- [x] In-game forum sections, paginated threads, replies and view counts (backend foundation; moderation and game UI remain).\n- [x] Server-positioned businesses, nearby discovery, distance-checked interaction menus and proximity-validated checkout (3D UI still pending).\n- [ ] Families and criminal factions.
+- [x] Initial business stock inventory, server-priced restocking from business cash, and player purchases with atomic stock/wallet/business-ledger updates and idempotency.
+- [x] Monthly salaries, rent and tax policy, paid business expenses, atomic 30-day settlements and financial reports.
+- [ ] Supplier contracts, business cash withdrawal/deposit controls, automatic scheduled settlements and in-world business interactions.
+- [x] In-game forum sections, paginated threads, replies and view counts (backend foundation; moderation and game UI remain).
+- [x] Server-positioned businesses, nearby discovery, distance-checked interaction menus and proximity-validated checkout (3D UI still pending).
+- [ ] Families and criminal factions.
 - [ ] Daily/weekly tasks, achievements and server-controlled login rewards.
 - [ ] Events, weather, world clock, leaderboards and in-game phone.
 
@@ -47,7 +51,7 @@
 - [ ] Client integration with authoritative services.
 
 ## Phase 4 — official ecosystem
-- [ ] Website and player account cabinet.
+- [x] Static donation-store catalogue hosted through GitHub Pages (preview only; no checkout or payment collection).\n- [ ] Secure payment provider integration, verified payment webhooks, refund handling and store-to-game entitlement delivery after adult/legal setup.\n- [ ] Website and player account cabinet.
 - [ ] Forum/community, rules, suggestions, applications and appeals.
 - [ ] Wiki, server status and incident page.
 - [ ] Telegram news/support bot and notifications.
