@@ -23,4 +23,4 @@ RUSSIA ONLINE RP is an original mobile open-world role-play game. Genre conventi
 9. DDoS mitigation needs hosting/network provider filtering plus CDN/WAF. Application code alone cannot stop volumetric attacks.
 
 ## Current implementation boundary
-This is a backend foundation, not a playable multiplayer game. It currently provides registration/login, database models, 11 organization/rank seed data, initial admin checks, economy ledger primitive, and a conservative anti-cheat ban service. Realtime world simulation, Android 3D client, MFA/email verification, appeals, vehicles, properties, inventory and deployment are later milestones.
+This is a backend foundation, not a playable multiplayer game. It currently provides registration/login, database models, 11 organization/rank seed data, initial admin checks, economy ledger primitive, and a conservative anti-cheat ban service. Realtime world simulation, Android 3D client, MFA/email verification, appeals, vehicle purchasing and ownership persistence now have an initial API foundation; spawning, parking, driving physics, garages, properties, inventory and deployment remain later milestones.
