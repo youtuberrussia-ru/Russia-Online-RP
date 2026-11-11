@@ -58,6 +58,11 @@ Base URL in local development: `http://localhost:3000`. Protected endpoints requ
 - `POST /v1/player/forum/threads` — create a thread; body: `{ "categoryCode", "title", "content" }`.
 - `POST /v1/player/forum/threads/:id/posts` — reply to an open thread; body: `{ "content" }`.
 
+## In-world business interactions
+- `GET /v1/world/nearby` — nearby active businesses based on server-owned player coordinates.
+- `POST /v1/world/interact` — open a business menu within 4.5 world units; returns actual inventory and server prices.
+- Customer purchase requests are rejected unless the player is in the world and within interaction distance.
+
 ## World session prototype
 - `POST /v1/world/join` — join this API process's in-memory world session; spawn is server-selected.
 - `POST /v1/world/input` — submit sequenced movement axes only (`sequence`, `forward`, `strafe`, `turn`). Position, velocity, elapsed time and sprint state are never accepted from the client; elapsed time is derived from server timestamps.

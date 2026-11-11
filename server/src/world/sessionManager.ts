@@ -29,6 +29,10 @@ export class WorldSessionManager{
   this.players.set(playerId,next);
   return this.snapshotOne(playerId,next);
  }
+ getPlayerSnapshot(playerId:string):WorldPlayerSnapshot|null{
+  const state=this.players.get(playerId);
+  return state?this.snapshotOne(playerId,state):null;
+ }
  getSnapshot():WorldPlayerSnapshot[]{
   return [...this.players.entries()].map(([playerId,state])=>this.snapshotOne(playerId,state)).sort((a,b)=>a.playerId.localeCompare(b.playerId));
  }

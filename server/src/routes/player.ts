@@ -11,6 +11,7 @@ import { getOwnedBusinesses, purchasePlayerBusiness } from "../services/business
 import { dismissBusinessEmployee, hireBusinessEmployee, listBusinessEmployees, updateBusinessEmployee } from "../services/businessEmployees.js";
 import { listBusinessStock, purchaseBusinessProduct, restockBusiness } from "../services/businessCommerce.js";
 import { createForumReply, createForumThread } from "../services/forum.js";
+import { worldSessions } from "../world/runtime.js";
 import { configureBusinessFinance, getBusinessFinanceReport, recordBusinessExpense, setBusinessEmployeeSalary, settleBusinessPeriod } from "../services/businessFinance.js";
 const reportSchema=z.object({targetId:z.string().optional(),category:z.enum(["PLAYER","BUG","CHEATING","OTHER"]),description:z.string().trim().min(20).max(2000)});
 const applicationSchema=z.object({organizationCode:z.enum(["MVD","FSB","ARMY","EMERCOM","HEALTH","PROSECUTOR","GOVERNMENT","TRAFFIC_POLICE","MEDIA","FSIN","CENTRAL_BANK"]),answers:z.record(z.string(),z.string().max(1000)).refine(v=>Object.keys(v).length>0)});
@@ -201,6 +202,11 @@ export async function playerRoutes(app:FastifyInstance){
   const params=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);
   const parsed=z.object({productCode:z.string().min(1).max(40),quantity:z.number().int().min(1).max(50),requestId:z.string().uuid()}).strict().safeParse(request.body);
   if(!params.success||!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  const worldPlayer=worldSessions.getPlayerSnapshot(request.user.sub);
+  if(!worldPlayer)return reply.code(409).send({error:"PLAYER_NOT_IN_WORLD"});
+  const targetBusiness=await app.prisma.business.findFirst({where:{id:params.data.id,status:"ACTIVE"},select:{worldX:true,worldZ:true}});
+  if(!targetBusiness)return reply.code(404).send({error:"BUSINESS_NOT_FOUND"});
+  if(Math.hypot(worldPlayer.position.x-targetBusiness.worldX,worldPlayer.position.z-targetBusiness.worldZ)>4.5)return reply.code(403).send({error:"TOO_FAR_TO_PURCHASE"});
   try{return reply.code(201).send(await purchaseBusinessProduct(app.prisma,{userId:request.user.sub,productBusinessId:params.data.id,...parsed.data}));}
   catch(error){const code=error instanceof Error?error.message:"BUSINESS_PURCHASE_FAILED";const status=code==="BUSINESS_NOT_FOUND"||code==="PRODUCT_NOT_FOUND"||code==="PROFILE_NOT_FOUND"||code==="WALLET_NOT_FOUND"?404:code==="INSUFFICIENT_FUNDS"||code==="INSUFFICIENT_STOCK"||code==="PRODUCT_NOT_AVAILABLE_FOR_BUSINESS"||code==="IDEMPOTENCY_KEY_REUSED"?409:400;return reply.code(status).send({error:code});}
  });

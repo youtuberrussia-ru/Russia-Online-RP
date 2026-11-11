@@ -1,10 +1,10 @@
 export const businessCatalog = [
-  { code: "grocery_01", name: "Продуктовый магазин «У дома»", type: "GROCERY", district: "Старый город", price: 180000n, description: "Небольшой магазин повседневных товаров." },
-  { code: "cafe_01", name: "Кафе «Перекрёсток»", type: "CAFE", district: "Центр", price: 320000n, description: "Городское кафе с залом для посетителей." },
-  { code: "service_01", name: "Автосервис «Гараж 24»", type: "SERVICE", district: "Промзона", price: 410000n, description: "Мастерская для обслуживания транспорта." },
-  { code: "clothing_01", name: "Магазин одежды «Стиль»", type: "RETAIL", district: "Торговый квартал", price: 470000n, description: "Магазин одежды и аксессуаров." },
-  { code: "fuel_01", name: "АЗС «Трасса»", type: "FUEL", district: "Южный выезд", price: 780000n, description: "Заправочная станция на выезде из города." },
-  { code: "hotel_01", name: "Отель «Панорама»", type: "HOTEL", district: "Набережная", price: 1250000n, description: "Небольшой городской отель." }
+  { code: "grocery_01", name: "Продуктовый магазин «У дома»", type: "GROCERY", district: "Старый город", price: 180000n, worldX: 30, worldZ: 20, description: "Небольшой магазин повседневных товаров." },
+  { code: "cafe_01", name: "Кафе «Перекрёсток»", type: "CAFE", district: "Центр", price: 320000n, worldX: 80, worldZ: 45, description: "Городское кафе с залом для посетителей." },
+  { code: "service_01", name: "Автосервис «Гараж 24»", type: "SERVICE", district: "Промзона", price: 410000n, worldX: -65, worldZ: 55, description: "Мастерская для обслуживания транспорта." },
+  { code: "clothing_01", name: "Магазин одежды «Стиль»", type: "RETAIL", district: "Торговый квартал", price: 470000n, worldX: 115, worldZ: -20, description: "Магазин одежды и аксессуаров." },
+  { code: "fuel_01", name: "АЗС «Трасса»", type: "FUEL", district: "Южный выезд", price: 780000n, worldX: -120, worldZ: -60, description: "Заправочная станция на выезде из города." },
+  { code: "hotel_01", name: "Отель «Панорама»", type: "HOTEL", district: "Набережная", price: 1250000n, worldX: 10, worldZ: -105, description: "Небольшой городской отель." }
 ] as const;
 
 export async function getBusinessCatalog(prisma: import("@prisma/client").PrismaClient) {
@@ -60,7 +60,7 @@ export async function purchasePlayerBusiness(
     }});
     const business = await tx.business.create({ data: {
       businessCode: item.code, displayName: item.name, businessType: item.type, district: item.district,
-      ownerProfileId: profile.id, purchaseKey, purchasedPrice: item.price
+      ownerProfileId: profile.id, purchaseKey, purchasedPrice: item.price, worldX: item.worldX, worldZ: item.worldZ
     }});
     return { business, walletBalance: updatedWallet.balance.toString(), alreadyPurchased: false };
   }, { isolationLevel: "Serializable" });

@@ -36,7 +36,7 @@
 - [x] Initial business catalogue, unique ownership, atomic idempotent purchases and wallet-ledger integration.
 - [x] Business employee roster, hiring/dismissal, owner-assigned staff/stock/cash permissions and audited changes; delegated managers cannot grant elevated permissions or dismiss privileged staff.
 - [x] Initial business stock inventory, server-priced restocking from business cash, and player purchases with atomic stock/wallet/business-ledger updates and idempotency.\n- [x] Monthly salaries, rent and tax policy, paid business expenses, atomic 30-day settlements and financial reports.\n- [ ] Supplier contracts, business cash withdrawal/deposit controls, automatic scheduled settlements and in-world business interactions.
-- [x] In-game forum sections, paginated threads, replies and view counts (backend foundation; moderation and game UI remain).\n- [ ] Families and criminal factions.
+- [x] In-game forum sections, paginated threads, replies and view counts (backend foundation; moderation and game UI remain).\n- [x] Server-positioned businesses, nearby discovery, distance-checked interaction menus and proximity-validated checkout (3D UI still pending).\n- [ ] Families and criminal factions.
 - [ ] Daily/weekly tasks, achievements and server-controlled login rewards.
 - [ ] Events, weather, world clock, leaderboards and in-game phone.
 

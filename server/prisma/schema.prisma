@@ -419,6 +419,8 @@ model Business {
   monthlyRent     BigInt         @default(0)
   taxRateBps      Int            @default(500)
   lastSettlementAt DateTime      @default(now())
+  worldX          Float          @default(0)
+  worldZ          Float          @default(0)
 
   @@index([ownerProfileId, status])
   @@index([businessType, district])
