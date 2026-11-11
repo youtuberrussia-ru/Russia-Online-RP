@@ -10,6 +10,7 @@ import { grantPropertyAccess, listPropertyAccess, listSharedProperties, revokePr
 import { getOwnedBusinesses, purchasePlayerBusiness } from "../services/businesses.js";
 import { dismissBusinessEmployee, hireBusinessEmployee, listBusinessEmployees, updateBusinessEmployee } from "../services/businessEmployees.js";
 import { listBusinessStock, purchaseBusinessProduct, restockBusiness } from "../services/businessCommerce.js";
+import { configureBusinessFinance, getBusinessFinanceReport, recordBusinessExpense, setBusinessEmployeeSalary, settleBusinessPeriod } from "../services/businessFinance.js";
 const reportSchema=z.object({targetId:z.string().optional(),category:z.enum(["PLAYER","BUG","CHEATING","OTHER"]),description:z.string().trim().min(20).max(2000)});
 const applicationSchema=z.object({organizationCode:z.enum(["MVD","FSB","ARMY","EMERCOM","HEALTH","PROSECUTOR","GOVERNMENT","TRAFFIC_POLICE","MEDIA","FSIN","CENTRAL_BANK"]),answers:z.record(z.string(),z.string().max(1000)).refine(v=>Object.keys(v).length>0)});
 async function requirePlayer(request:import("fastify").FastifyRequest,reply:import("fastify").FastifyReply){
@@ -320,4 +321,31 @@ export async function playerRoutes(app:FastifyInstance){
   try{return await claimDailyReward(app.prisma,request.user.sub);}
   catch(error){request.log.error(error);return reply.code(409).send({error:"CLAIM_CONFLICT_OR_WALLET_UNAVAILABLE"});}
  });
+
+ app.get("/businesses/:id/finance",{preHandler:requirePlayer},async(request,reply)=>{
+  const p=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);const q=z.object({days:z.coerce.number().int().min(1).max(90).default(30)}).safeParse(request.query);
+  if(!p.success||!q.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  try{return await getBusinessFinanceReport(app.prisma,profile.id,p.data.id,q.data.days);}catch(e){const code=e instanceof Error?e.message:"BUSINESS_FINANCE_FAILED";return reply.code(code==="BUSINESS_NOT_FOUND"?404:403).send({error:code});}
+ });
+ app.patch("/businesses/:id/finance",{preHandler:requirePlayer,config:{rateLimit:{max:5,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const p=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);const b=z.object({monthlyRent:z.string().regex(/^(0|[1-9][0-9]{0,11})$/),taxRateBps:z.number().int().min(0).max(3000)}).strict().safeParse(request.body);
+  if(!p.success||!b.success)return reply.code(400).send({error:"INVALID_INPUT"});const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  try{return await configureBusinessFinance(app.prisma,{profileId:profile.id,businessId:p.data.id,...b.data});}catch(e){const code=e instanceof Error?e.message:"BUSINESS_FINANCE_CONFIG_FAILED";return reply.code(code==="BUSINESS_NOT_FOUND"?404:403).send({error:code});}
+ });
+ app.patch("/businesses/:id/employees/:employeeId/salary",{preHandler:requirePlayer},async(request,reply)=>{
+  const p=z.object({id:z.string().min(1).max(64),employeeId:z.string().min(1).max(64)}).safeParse(request.params);const b=z.object({monthlySalary:z.string().regex(/^(0|[1-9][0-9]{0,11})$/)}).strict().safeParse(request.body);
+  if(!p.success||!b.success)return reply.code(400).send({error:"INVALID_INPUT"});const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  try{return await setBusinessEmployeeSalary(app.prisma,{profileId:profile.id,businessId:p.data.id,employeeId:p.data.employeeId,...b.data});}catch(e){const code=e instanceof Error?e.message:"BUSINESS_SALARY_FAILED";return reply.code(code==="BUSINESS_NOT_FOUND"||code==="EMPLOYEE_NOT_FOUND"?404:403).send({error:code});}
+ });
+ app.post("/businesses/:id/expenses",{preHandler:requirePlayer,config:{rateLimit:{max:10,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const p=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);const b=z.object({category:z.enum(["UTILITIES","REPAIRS","SUPPLIES","MARKETING","OTHER"]),description:z.string().trim().min(3).max(200),amount:z.string().regex(/^[1-9][0-9]{0,11}$/),requestId:z.string().uuid()}).strict().safeParse(request.body);
+  if(!p.success||!b.success)return reply.code(400).send({error:"INVALID_INPUT"});const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  try{return reply.code(201).send(await recordBusinessExpense(app.prisma,{profileId:profile.id,businessId:p.data.id,...b.data}));}catch(e){const code=e instanceof Error?e.message:"BUSINESS_EXPENSE_FAILED";return reply.code(code==="BUSINESS_NOT_FOUND"?404:code==="BUSINESS_PERMISSION_DENIED"?403:409).send({error:code});}
+ });
+ app.post("/businesses/:id/settle",{preHandler:requirePlayer,config:{rateLimit:{max:2,timeWindow:"1 day"}}},async(request,reply)=>{
+  const p=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);if(!p.success)return reply.code(400).send({error:"INVALID_INPUT"});const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  try{return await settleBusinessPeriod(app.prisma,{profileId:profile.id,businessId:p.data.id});}catch(e){const code=e instanceof Error?e.message:"BUSINESS_SETTLEMENT_FAILED";return reply.code(code==="BUSINESS_NOT_FOUND"?404:code==="BUSINESS_OWNER_REQUIRED"?403:409).send({error:code});}
+ });
+
 }

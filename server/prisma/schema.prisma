@@ -413,6 +413,10 @@ model Business {
   ledger          BusinessLedger[]
   stockItems      BusinessStockItem[]
   sales           BusinessSale[]
+  settlements     BusinessSettlement[]
+  monthlyRent     BigInt         @default(0)
+  taxRateBps      Int            @default(500)
+  lastSettlementAt DateTime      @default(now())
 
   @@index([ownerProfileId, status])
   @@index([businessType, district])
@@ -426,6 +430,7 @@ model BusinessEmployee {
   canManageStaff  Boolean       @default(false)
   canManageStock  Boolean       @default(false)
   canManageCash   Boolean       @default(false)
+  monthlySalary   BigInt        @default(0)
   hiredAt         DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   business        Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
@@ -447,4 +452,46 @@ model BusinessLedger {
   business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId, createdAt])
+}
+
+
+model BusinessStockItem {
+  id          String   @id @default(cuid())
+  businessId  String
+  productCode String
+  quantity    Int      @default(0)
+  updatedAt   DateTime @updatedAt
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  @@unique([businessId, productCode])
+  @@index([businessId, updatedAt])
+}
+
+model BusinessSale {
+  id             String   @id @default(cuid())
+  businessId     String
+  buyerProfileId String
+  productCode    String
+  quantity       Int
+  totalAmount    BigInt
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  @@index([businessId, createdAt])
+  @@index([buyerProfileId, createdAt])
+}
+
+model BusinessSettlement {
+  id             String   @id @default(cuid())
+  businessId     String
+  periodStart    DateTime
+  periodEnd      DateTime
+  grossRevenue   BigInt
+  payroll        BigInt
+  rent           BigInt
+  tax            BigInt
+  totalPaid      BigInt
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  @@index([businessId, periodEnd])
 }

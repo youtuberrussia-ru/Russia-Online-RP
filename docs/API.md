@@ -25,7 +25,15 @@ Base URL in local development: `http://localhost:3000`. Protected endpoints requ
 - `POST /v1/player/jobs/shifts/start` — starts one active shift; body: `{ "jobCode": "TAXI" }`.
 - `POST /v1/player/jobs/shifts/:id/finish` — finishes a shift; body: `{ "requestId": "<UUID>" }`. Server measures elapsed time and calculates pay; minimum shift is 10 minutes, paid time is capped at 2 hours, and daily job income is capped at 25,000.
 - `POST /v1/player/jobs/shifts/:id/cancel` — cancels an active shift without payout.
-- `GET /v1/player/businesses/:id/stock` — owner or employee with stock-management permission sees product quantities and server-set restock/sale prices.\n- `POST /v1/player/businesses/:id/stock/restock` — restock from the business cash balance; body: `{ "productCode": "water", "quantity": 10, "requestId": "<UUID>" }`. Requires stock and cash permissions; quantity is 1–50 and the operation is idempotent and ledgered.\n- `POST /v1/player/businesses/:id/purchase` — buy an in-stock product; body: `{ "productCode": "water", "quantity": 1, "requestId": "<UUID>" }`. The server checks stock and wallet, charges the buyer, credits the business and writes both ledgers atomically.\n- `GET /v1/player/businesses/:id/employees` — owner or staff manager may view the business roster.
+- `GET /v1/player/businesses/:id/stock` — owner or stock manager views inventory and server prices.
+- `POST /v1/player/businesses/:id/stock/restock` — purchase stock from business cash; atomic and idempotent.
+- `POST /v1/player/businesses/:id/purchase` — customer purchase; stock, wallet and business ledger update atomically.
+- `GET /v1/player/businesses/:id/finance?days=30` — 1–90 day financial statement with sales, restocking, payroll, rent, taxes, expenses and ledger.
+- `PATCH /v1/player/businesses/:id/finance` — owner sets monthly rent and tax rate (0–30%).
+- `PATCH /v1/player/businesses/:id/employees/:employeeId/salary` — owner sets an employee's monthly salary.
+- `POST /v1/player/businesses/:id/expenses` — pay and record utilities, repairs, supplies, marketing or other expenses.
+- `POST /v1/player/businesses/:id/settle` — owner executes the due 30-day payroll, rent and tax settlement atomically; insufficient cash leaves the whole settlement pending.
+- `GET /v1/player/businesses/:id/employees` — owner or staff manager may view the business roster.
 - `POST /v1/player/businesses/:id/employees` — hire by nickname; body: `{ "nickname": "Player", "jobTitle": "Кассир" }`. Owner or staff manager may hire; new employees receive no elevated permissions by default.
 - `PATCH /v1/player/businesses/:id/employees/:employeeId` — owner only; body: `{ "jobTitle": "Менеджер", "canManageStaff": false, "canManageStock": true, "canManageCash": false }`. Only the owner can assign elevated permissions.
 - `DELETE /v1/player/businesses/:id/employees/:employeeId` — owner or staff manager may dismiss ordinary staff; only the owner may dismiss an employee with elevated permissions. All staff changes are audited.
