@@ -15,11 +15,19 @@ Base URL in local development: `http://localhost:3000`. Protected endpoints requ
 - `GET /v1/player/me` — authenticated account, profile, active organization memberships and wallet balance.
 - `POST /v1/player/reports` — authenticated report. Body: `{ "category": "PLAYER|BUG|CHEATING|OTHER", "description": "...", "targetId": "optional" }`.
 - `POST /v1/player/organizations/applications` — authenticated application. Body: `{ "organizationCode": "...", "answers": { "question": "answer" } }`.
-- `GET /v1/player/vehicles` — authenticated player garage; returns vehicles owned by the current profile.\n- `POST /v1/player/vehicles/purchase` — authenticated purchase; body: `{ "vehicleCode": "sedan_01", "requestId": "<UUID>" }`. Purchase, wallet debit, ledger entry and vehicle ownership are committed atomically. Repeating the same request ID returns the original vehicle without charging again.\n- `POST /v1/player/daily-rewards/claim` — authenticated daily reward claim. Server determines the UTC day and reward; duplicate same-day claims are blocked.
+- `GET /v1/player/jobs` — server-owned lawful job catalogue and hourly rates.
+- `GET /v1/player/jobs/shifts` — latest 20 job shifts for the current profile.
+- `POST /v1/player/jobs/shifts/start` — starts one active shift; body: `{ "jobCode": "TAXI" }`.
+- `POST /v1/player/jobs/shifts/:id/finish` — finishes a shift; body: `{ "requestId": "<UUID>" }`. Server measures elapsed time and calculates pay; minimum shift is 10 minutes, paid time is capped at 2 hours, and daily job income is capped at 25,000.
+- `POST /v1/player/jobs/shifts/:id/cancel` — cancels an active shift without payout.
+- `GET /v1/player/vehicles` — authenticated player garage; returns vehicles owned by the current profile.
+- `POST /v1/player/vehicles/purchase` — authenticated purchase; body: `{ "vehicleCode": "sedan_01", "requestId": "<UUID>" }`. Purchase, wallet debit, ledger entry and vehicle ownership are committed atomically. Repeating the same request ID returns the original vehicle without charging again.
+- `POST /v1/player/daily-rewards/claim` — authenticated daily reward claim. Server determines the UTC day and reward; duplicate same-day claims are blocked.
 - `POST /v1/player/ban-appeals` — authenticated appeal for an active ban; one pending appeal per ban. A banned account receives a short-lived, appeal-only token from login and cannot use it for normal player, leader or admin endpoints.
 
 ## Game catalogue
-- `GET /v1/game/organizations` — public catalogue of the 11 official organizations and configured ranks.\n- `GET /v1/game/vehicles` — public server-owned starter vehicle catalogue and prices.
+- `GET /v1/game/organizations` — public catalogue of the 11 official organizations and configured ranks.
+- `GET /v1/game/vehicles` — public server-owned starter vehicle catalogue and prices.
 
 ## World session prototype
 - `POST /v1/world/join` — join this API process's in-memory world session; spawn is server-selected.
@@ -30,7 +38,10 @@ Base URL in local development: `http://localhost:3000`. Protected endpoints requ
 
 ## Organization leader
 - `GET /v1/org-leader/:code/applications` — pending applications; requires active rank 10 or 11 membership in that organization.
-- `POST /v1/org-leader/:code/applications/:id/review` — body: `{ "decision": "ACCEPT|REJECT", "note": "..." }`; requires recruitment permission.\n- `GET /v1/org-leader/:code/members` — active organization roster; requires leadership membership.\n- `PATCH /v1/org-leader/:code/members/:memberId/rank` — body: `{ "action": "PROMOTE|DEMOTE", "note": "..." }`; leaders can only change members below their own rank, and cannot promote anyone to their own rank.\n- `POST /v1/org-leader/:code/members/:memberId/dismiss` — body: `{ "note": "..." }`; leaders can dismiss only members below their own rank. Changes are audited.
+- `POST /v1/org-leader/:code/applications/:id/review` — body: `{ "decision": "ACCEPT|REJECT", "note": "..." }`; requires recruitment permission.
+- `GET /v1/org-leader/:code/members` — active organization roster; requires leadership membership.
+- `PATCH /v1/org-leader/:code/members/:memberId/rank` — body: `{ "action": "PROMOTE|DEMOTE", "note": "..." }`; leaders can only change members below their own rank, and cannot promote anyone to their own rank.
+- `POST /v1/org-leader/:code/members/:memberId/dismiss` — body: `{ "note": "..." }`; leaders can dismiss only members below their own rank. Changes are audited.
 
 ## Admin
 - `GET /v1/admin/me` — current admin/owner identity.
