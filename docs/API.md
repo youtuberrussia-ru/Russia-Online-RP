@@ -15,11 +15,11 @@ Base URL in local development: `http://localhost:3000`. Protected endpoints requ
 - `GET /v1/player/me` — authenticated account, profile, active organization memberships and wallet balance.
 - `POST /v1/player/reports` — authenticated report. Body: `{ "category": "PLAYER|BUG|CHEATING|OTHER", "description": "...", "targetId": "optional" }`.
 - `POST /v1/player/organizations/applications` — authenticated application. Body: `{ "organizationCode": "...", "answers": { "question": "answer" } }`.
-- `POST /v1/player/daily-rewards/claim` — authenticated daily reward claim. Server determines the UTC day and reward; duplicate same-day claims are blocked.
+- `GET /v1/player/vehicles` — authenticated player garage; returns vehicles owned by the current profile.\n- `POST /v1/player/vehicles/purchase` — authenticated purchase; body: `{ "vehicleCode": "sedan_01", "requestId": "<UUID>" }`. Purchase, wallet debit, ledger entry and vehicle ownership are committed atomically. Repeating the same request ID returns the original vehicle without charging again.\n- `POST /v1/player/daily-rewards/claim` — authenticated daily reward claim. Server determines the UTC day and reward; duplicate same-day claims are blocked.
 - `POST /v1/player/ban-appeals` — authenticated appeal for an active ban; one pending appeal per ban. A banned account receives a short-lived, appeal-only token from login and cannot use it for normal player, leader or admin endpoints.
 
 ## Game catalogue
-- `GET /v1/game/organizations` — public catalogue of the 11 official organizations and configured ranks.
+- `GET /v1/game/organizations` — public catalogue of the 11 official organizations and configured ranks.\n- `GET /v1/game/vehicles` — public server-owned starter vehicle catalogue and prices.
 
 ## World session prototype
 - `POST /v1/world/join` — join this API process's in-memory world session; spawn is server-selected.
