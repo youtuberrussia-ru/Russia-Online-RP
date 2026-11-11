@@ -10,6 +10,7 @@ import { grantPropertyAccess, listPropertyAccess, listSharedProperties, revokePr
 import { getOwnedBusinesses, purchasePlayerBusiness } from "../services/businesses.js";
 import { dismissBusinessEmployee, hireBusinessEmployee, listBusinessEmployees, updateBusinessEmployee } from "../services/businessEmployees.js";
 import { listBusinessStock, purchaseBusinessProduct, restockBusiness } from "../services/businessCommerce.js";
+import { createForumReply, createForumThread } from "../services/forum.js";
 import { configureBusinessFinance, getBusinessFinanceReport, recordBusinessExpense, setBusinessEmployeeSalary, settleBusinessPeriod } from "../services/businessFinance.js";
 const reportSchema=z.object({targetId:z.string().optional(),category:z.enum(["PLAYER","BUG","CHEATING","OTHER"]),description:z.string().trim().min(20).max(2000)});
 const applicationSchema=z.object({organizationCode:z.enum(["MVD","FSB","ARMY","EMERCOM","HEALTH","PROSECUTOR","GOVERNMENT","TRAFFIC_POLICE","MEDIA","FSIN","CENTRAL_BANK"]),answers:z.record(z.string(),z.string().max(1000)).refine(v=>Object.keys(v).length>0)});
@@ -348,4 +349,21 @@ export async function playerRoutes(app:FastifyInstance){
   try{return await settleBusinessPeriod(app.prisma,{profileId:profile.id,businessId:p.data.id});}catch(e){const code=e instanceof Error?e.message:"BUSINESS_SETTLEMENT_FAILED";return reply.code(code==="BUSINESS_NOT_FOUND"?404:code==="BUSINESS_OWNER_REQUIRED"?403:409).send({error:code});}
  });
 
+ app.post("/forum/threads",{preHandler:requirePlayer,config:{rateLimit:{max:3,timeWindow:"10 minutes"}}},async(request,reply)=>{
+  const b=z.object({categoryCode:z.string().max(30),title:z.string().trim().min(5).max(80),content:z.string().trim().min(20).max(5000)}).strict().safeParse(request.body);
+  if(!b.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});
+  if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  try{return reply.code(201).send(await createForumThread(app.prisma,{profileId:profile.id,...b.data}));}
+  catch(e){const code=e instanceof Error?e.message:"FORUM_THREAD_CREATE_FAILED";return reply.code(code==="FORUM_CATEGORY_NOT_FOUND"?404:400).send({error:code});}
+ });
+ app.post("/forum/threads/:id/posts",{preHandler:requirePlayer,config:{rateLimit:{max:8,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const x=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);
+  const b=z.object({content:z.string().trim().min(2).max(3000)}).strict().safeParse(request.body);
+  if(!x.success||!b.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});
+  if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  try{return reply.code(201).send(await createForumReply(app.prisma,{profileId:profile.id,threadId:x.data.id,content:b.data.content}));}
+  catch(e){const code=e instanceof Error?e.message:"FORUM_REPLY_FAILED";return reply.code(code==="FORUM_THREAD_NOT_OPEN"?409:400).send({error:code});}
+ });
 }

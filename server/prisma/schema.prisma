@@ -71,6 +71,8 @@ model PlayerProfile {
   ownedBusinesses Business[] @relation("BusinessOwner")
   businessEmployment BusinessEmployee[]
   jobShifts    JobShift[]
+  forumThreads ForumThread[] @relation("ForumThreadAuthor")
+  forumPosts   ForumPost[] @relation("ForumPostAuthor")
 }
 
 model Wallet {
@@ -494,4 +496,36 @@ model BusinessSettlement {
   createdAt      DateTime @default(now())
   business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   @@index([businessId, periodEnd])
+}
+
+enum ForumThreadStatus { OPEN LOCKED HIDDEN }
+enum ForumPostStatus { VISIBLE HIDDEN }
+model ForumThread {
+ id String @id @default(cuid())
+ categoryCode String
+ title String
+ content String
+ authorProfileId String
+ status ForumThreadStatus @default(OPEN)
+ pinned Boolean @default(false)
+ views Int @default(0)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ author PlayerProfile @relation("ForumThreadAuthor",fields:[authorProfileId],references:[id],onDelete:Cascade)
+ posts ForumPost[]
+ @@index([categoryCode,status,pinned,updatedAt])
+ @@index([authorProfileId,createdAt])
+}
+model ForumPost {
+ id String @id @default(cuid())
+ threadId String
+ authorProfileId String
+ content String
+ status ForumPostStatus @default(VISIBLE)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ thread ForumThread @relation(fields:[threadId],references:[id],onDelete:Cascade)
+ author PlayerProfile @relation("ForumPostAuthor",fields:[authorProfileId],references:[id],onDelete:Cascade)
+ @@index([threadId,createdAt])
+ @@index([authorProfileId,createdAt])
 }
