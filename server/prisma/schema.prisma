@@ -65,6 +65,7 @@ model PlayerProfile {
   memberships OrgMembership[]
   applications OrganizationApplication[]
   vehicles     PlayerVehicle[]
+  jobShifts    JobShift[]
 }
 
 model Wallet {
@@ -273,4 +274,26 @@ model PlayerVehicle {
 
   @@index([profileId, status])
   @@index([modelCode])
+}
+
+
+enum JobShiftStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model JobShift {
+  id             String          @id @default(cuid())
+  profileId      String
+  jobCode        String
+  status         JobShiftStatus  @default(ACTIVE)
+  startedAt      DateTime        @default(now())
+  endedAt        DateTime?
+  payout         BigInt          @default(0)
+  finishKey      String?         @unique
+  profile        PlayerProfile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, status, startedAt])
+  @@index([profileId, endedAt])
 }
