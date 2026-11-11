@@ -411,6 +411,7 @@ model Business {
   owner           PlayerProfile  @relation("BusinessOwner", fields: [ownerProfileId], references: [id], onDelete: Restrict)
   employees       BusinessEmployee[]
   ledger          BusinessLedger[]
+  stockItems      BusinessStockItem[]
 
   @@index([ownerProfileId, status])
   @@index([businessType, district])
