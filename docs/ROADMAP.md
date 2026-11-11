@@ -34,7 +34,8 @@
 - [x] Owner-controlled property access grants with separate entry, storage and parking permissions, revocation and shared-property listing.
 - [ ] Property interiors, physical storage inventory, maintenance, taxes, rent and ownership transfers.
 - [x] Initial business catalogue, unique ownership, atomic idempotent purchases and wallet-ledger integration.
-- [ ] Business employees and permission management, stock, cash operations, expenses and verifiable revenue sources.
+- [x] Business employee roster, hiring/dismissal, owner-assigned staff/stock/cash permissions and audited changes; delegated managers cannot grant elevated permissions or dismiss privileged staff.
+- [ ] Business stock, cash operations, expenses and verifiable revenue sources.
 - [ ] Families and criminal factions.
 - [ ] Daily/weekly tasks, achievements and server-controlled login rewards.
 - [ ] Events, weather, world clock, leaderboards and in-game phone.
