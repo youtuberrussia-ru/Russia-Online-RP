@@ -66,6 +66,7 @@ model PlayerProfile {
   memberships OrgMembership[]
   applications OrganizationApplication[]
   vehicles     PlayerVehicle[]
+  properties   PlayerProperty[]
   jobShifts    JobShift[]
 }
 
@@ -337,4 +338,28 @@ model BankTransfer {
 
   @@index([fromAccountId, createdAt])
   @@index([toAccountId, createdAt])
+}
+
+
+enum PropertyStatus {
+  OWNED
+  FORECLOSED
+}
+
+model PlayerProperty {
+  id             String         @id @default(cuid())
+  profileId      String
+  propertyCode   String
+  displayName    String
+  propertyType   String
+  purchaseKey    String         @unique
+  purchasedPrice BigInt
+  status         PropertyStatus @default(OWNED)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  profile        PlayerProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, propertyCode])
+  @@index([profileId, status])
+  @@index([propertyCode])
 }
