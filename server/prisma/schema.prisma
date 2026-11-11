@@ -264,6 +264,7 @@ model PlayerVehicle {
   modelCode      String
   displayName    String
   plate          String        @unique
+  purchaseKey    String        @unique
   purchasedPrice BigInt
   status         VehicleStatus @default(STORED)
   createdAt      DateTime      @default(now())
