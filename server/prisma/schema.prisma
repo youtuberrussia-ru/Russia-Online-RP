@@ -45,6 +45,7 @@ model User {
   updatedAt     DateTime          @updatedAt
   profile       PlayerProfile?
   wallet        Wallet?
+  bankAccount   BankAccount?
   adminStaff    AdminStaff?
   auditActor    AdminAuditLog[]   @relation("AuditActor")
   bans          AccountBan[]
@@ -296,4 +297,44 @@ model JobShift {
 
   @@index([profileId, status, startedAt])
   @@index([profileId, endedAt])
+}
+
+
+model BankAccount {
+  id           String            @id @default(cuid())
+  userId       String            @unique
+  balance      BigInt            @default(0)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions BankTransaction[]
+  outgoing     BankTransfer[]    @relation("BankTransferFrom")
+  incoming     BankTransfer[]    @relation("BankTransferTo")
+}
+
+model BankTransaction {
+  id             String      @id @default(cuid())
+  accountId      String
+  amount         BigInt
+  balanceAfter   BigInt
+  reason         String
+  idempotencyKey String      @unique
+  createdAt      DateTime    @default(now())
+  account        BankAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, createdAt])
+}
+
+model BankTransfer {
+  id            String      @id @default(cuid())
+  requestKey    String      @unique
+  fromAccountId String
+  toAccountId   String
+  amount        BigInt
+  createdAt     DateTime    @default(now())
+  fromAccount   BankAccount @relation("BankTransferFrom", fields: [fromAccountId], references: [id], onDelete: Cascade)
+  toAccount     BankAccount @relation("BankTransferTo", fields: [toAccountId], references: [id], onDelete: Cascade)
+
+  @@index([fromAccountId, createdAt])
+  @@index([toAccountId, createdAt])
 }
