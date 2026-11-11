@@ -64,6 +64,7 @@ model PlayerProfile {
   user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   memberships OrgMembership[]
   applications OrganizationApplication[]
+  vehicles     PlayerVehicle[]
 }
 
 model Wallet {
@@ -248,4 +249,27 @@ model BanAppeal {
 
   @@index([status, createdAt])
   @@index([userId, createdAt])
+}
+
+
+enum VehicleStatus {
+  STORED
+  ACTIVE
+  IMPOUNDED
+}
+
+model PlayerVehicle {
+  id             String        @id @default(cuid())
+  profileId      String
+  modelCode      String
+  displayName    String
+  plate          String        @unique
+  purchasedPrice BigInt
+  status         VehicleStatus @default(STORED)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  profile        PlayerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, status])
+  @@index([modelCode])
 }
