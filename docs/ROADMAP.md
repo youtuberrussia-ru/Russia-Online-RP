@@ -18,12 +18,16 @@
 - [ ] Secure owner bootstrap that cannot be claimed by a player.
 - [ ] Owner/developer dashboard, admin panel, leader panel and audit search.
 - [ ] Player reports, moderation cases, ban appeals and evidence review.
-- [x] Organization interview applications, leader review, active roster, audited promotions/demotions and dismissal with rank hierarchy boundaries.\n- [ ] Organization salaries, duty, fleet, storage, department operations and complete employment history.
+- [x] Organization interview applications, leader review, active roster, audited promotions/demotions and dismissal with rank hierarchy boundaries.
+- [ ] Organization salaries, duty, fleet, storage, department operations and complete employment history.
 
 ## Phase 2 — game services
 - [ ] Authoritative player sessions and realtime transport (movement integrator exists; socket transport and room lifecycle remain).
-- [x] Initial vehicle catalogue, player garage persistence and atomic idempotent purchases with wallet ledger integration.\n- [ ] Vehicle spawning, parking, garage locations, ownership transfers, fuel, damage and server-authoritative driving.\n- [ ] Movement, combat, inventory and interaction validation.
-- [ ] Bank, jobs, businesses, properties, families and criminal factions.
+- [x] Initial vehicle catalogue, player garage persistence and atomic idempotent purchases with wallet ledger integration.
+- [ ] Vehicle spawning, parking, garage locations, ownership transfers, fuel, damage and server-authoritative driving.
+- [ ] Movement, combat, inventory and interaction validation.
+- [x] Initial server-controlled job catalogue, shift lifecycle and wallet-ledger payouts with duration and daily-income caps.
+- [ ] Bank, businesses, properties, families and criminal factions.
 - [ ] Daily/weekly tasks, achievements and server-controlled login rewards.
 - [ ] Events, weather, world clock, leaderboards and in-game phone.
 
