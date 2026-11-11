@@ -42,8 +42,8 @@ export async function depositToBank(prisma: PrismaClient, userId: string, amount
 }
 
 export async function withdrawFromBank(prisma: PrismaClient, userId: string, amountText: string, requestId: string) {
-  const amount = parseAmount(amountText);
-  assertRequestId(requestId);
+  const amount = parseBankAmount(amountText);
+  assertBankRequestId(requestId);
   return prisma.$transaction(async tx => {
     const key = `bank-withdraw:${requestId}`;
     const prior = await tx.bankTransaction.findUnique({ where: { idempotencyKey: key } });
@@ -65,8 +65,8 @@ export async function withdrawFromBank(prisma: PrismaClient, userId: string, amo
 }
 
 export async function transferBankFunds(prisma: PrismaClient, userId: string, recipientNickname: string, amountText: string, requestId: string) {
-  const amount = parseAmount(amountText);
-  assertRequestId(requestId);
+  const amount = parseBankAmount(amountText);
+  assertBankRequestId(requestId);
   const nickname = recipientNickname.trim();
   if (nickname.length < 3 || nickname.length > 20) throw new Error("INVALID_RECIPIENT");
   return prisma.$transaction(async tx => {
