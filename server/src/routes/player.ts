@@ -122,7 +122,7 @@ export async function playerRoutes(app:FastifyInstance){
  app.get("/properties",{preHandler:requirePlayer},async(request,reply)=>{
   const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});
   if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
-  const properties=await app.prisma.playerProperty.findMany({where:{profileId:profile.id,status:"OWNED"},orderBy:{createdAt:"desc"},select:{id:true,propertyCode:true,displayName:true,propertyType:true,purchasedPrice:true,status:true,createdAt:true}});
+  const properties=await app.prisma.playerProperty.findMany({where:{profileId:profile.id,status:"OWNED"},orderBy:{createdAt:"desc"},select:{id:true,propertyCode:true,displayName:true,propertyType:true,district:true,interiorCode:true,storageSlots:true,parkingSlots:true,purchasedPrice:true,status:true,createdAt:true}});
   return properties.map(property=>({...property,purchasedPrice:property.purchasedPrice.toString()}));
  });
  app.post("/properties/purchase",{preHandler:requirePlayer,config:{rateLimit:{max:5,timeWindow:"1 minute"}}},async(request,reply)=>{
@@ -131,7 +131,7 @@ export async function playerRoutes(app:FastifyInstance){
   try{
    const result=await purchasePlayerProperty(app.prisma,{userId:request.user.sub,...parsed.data});
    return reply.code(result.alreadyPurchased?200:201).send({
-    property:{id:result.property.id,propertyCode:result.property.propertyCode,displayName:result.property.displayName,propertyType:result.property.propertyType,status:result.property.status,purchasedPrice:result.property.purchasedPrice.toString()},
+    property:{id:result.property.id,propertyCode:result.property.propertyCode,displayName:result.property.displayName,propertyType:result.property.propertyType,district:result.property.district,interiorCode:result.property.interiorCode,storageSlots:result.property.storageSlots,parkingSlots:result.property.parkingSlots,status:result.property.status,purchasedPrice:result.property.purchasedPrice.toString()},
     balance:result.balance,
     alreadyPurchased:result.alreadyPurchased
    });
