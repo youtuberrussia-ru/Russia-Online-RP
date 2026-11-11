@@ -67,6 +67,7 @@ model PlayerProfile {
   applications OrganizationApplication[]
   vehicles     PlayerVehicle[]
   properties   PlayerProperty[]
+  propertyAccess PropertyAccess[]
   jobShifts    JobShift[]
 }
 
@@ -362,8 +363,26 @@ model PlayerProperty {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   profile        PlayerProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  accessGrants   PropertyAccess[]
 
   @@unique([profileId, propertyCode])
   @@index([profileId, status])
   @@index([propertyCode])
+}
+
+
+model PropertyAccess {
+  id              String         @id @default(cuid())
+  propertyId      String
+  granteeProfileId String
+  canEnter        Boolean        @default(true)
+  canUseStorage   Boolean        @default(false)
+  canPark         Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  property        PlayerProperty @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  grantee         PlayerProfile  @relation(fields: [granteeProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, granteeProfileId])
+  @@index([granteeProfileId, updatedAt])
 }
