@@ -20,7 +20,25 @@ async function main() {
    update:{name:item.name,description:item.description},
    create:{code:item.code,name:item.name,description:item.description,ranks:{create:item.ranks.map((title,index)=>({rank:index+1,title,salary:0n,permissions:index===10?["org.manage","org.recruit","org.dismiss","org.promote","org.storage","org.fleet","org.events"]:["org.view"]}))}}
   });
+  const organization=await prisma.organization.findUniqueOrThrow({where:{code:item.code}});
+  for(let index=0;index<item.ranks.length;index++){
+   const rank=index+1;
+   const permissions=rank>=10
+    ?["org.view","org.recruit","org.dismiss","org.promote","org.demote","org.manage_departments","org.storage","org.fleet","org.events","org.salary"]
+    :rank===9
+     ?["org.view","org.recruit","org.manage_department","org.events"]
+     :rank>=7
+      ?["org.view","org.manage_department","org.events"]
+      :rank>=4
+       ?["org.view","org.duty"]
+       :["org.view"];
+   await prisma.organizationRank.upsert({
+    where:{organizationId_rank:{organizationId:organization.id,rank}},
+    update:{title:item.ranks[index],permissions},
+    create:{organizationId:organization.id,rank,title:item.ranks[index],salary:0n,permissions}
+   });
+  }
  }
- console.log("Seeded 11 official organizations.");
+ console.log("Seeded 11 official organizations and permissioned rank ladders.");
 }
 main().finally(async()=>prisma.$disconnect());
