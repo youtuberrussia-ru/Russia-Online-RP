@@ -14,7 +14,8 @@ export async function purchasePlayerVehicle(
     const previous = await tx.playerVehicle.findUnique({ where: { purchaseKey } });
     if (previous) {
       if (previous.modelCode !== item.code) throw new Error("IDEMPOTENCY_KEY_REUSED");
-      return { vehicle: previous, balance: null, alreadyPurchased: true };
+      const currentWallet = await tx.wallet.findUnique({ where: { userId: input.userId }, select: { balance: true } });
+      return { vehicle: previous, balance: currentWallet?.balance.toString() ?? null, alreadyPurchased: true };
     }
 
     const profile = await tx.playerProfile.findUnique({
