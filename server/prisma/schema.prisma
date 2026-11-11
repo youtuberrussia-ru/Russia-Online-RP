@@ -352,6 +352,10 @@ model PlayerProperty {
   propertyCode   String
   displayName    String
   propertyType   String
+  district       String
+  interiorCode   String
+  storageSlots   Int            @default(0)
+  parkingSlots   Int            @default(0)
   purchaseKey    String         @unique
   purchasedPrice BigInt
   status         PropertyStatus @default(OWNED)
