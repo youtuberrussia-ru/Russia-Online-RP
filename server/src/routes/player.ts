@@ -12,6 +12,7 @@ import { dismissBusinessEmployee, hireBusinessEmployee, listBusinessEmployees, u
 import { listBusinessStock, purchaseBusinessProduct, restockBusiness } from "../services/businessCommerce.js";
 import { createForumReply, createForumThread } from "../services/forum.js";
 import { listPlayerInventory } from "../services/businessCommerce.js";
+import { usePlayerInventoryItem } from "../services/playerInventory.js";
 import { worldSessions } from "../world/runtime.js";
 import { configureBusinessFinance, getBusinessFinanceReport, recordBusinessExpense, setBusinessEmployeeSalary, settleBusinessPeriod } from "../services/businessFinance.js";
 const reportSchema=z.object({targetId:z.string().optional(),category:z.enum(["PLAYER","BUG","CHEATING","OTHER"]),description:z.string().trim().min(20).max(2000)});
@@ -32,6 +33,13 @@ export async function playerRoutes(app:FastifyInstance){
   try{return await listPlayerInventory(app.prisma,request.user.sub);}
   catch(error){const code=error instanceof Error?error.message:"INVENTORY_LOAD_FAILED";return reply.code(code==="PROFILE_NOT_FOUND"?404:500).send({error:code});}
  });
+ app.post("/inventory/use",{preHandler:requirePlayer,config:{rateLimit:{max:10,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const body=z.object({itemCode:z.string().trim().min(2).max(40),quantity:z.number().int().min(1).max(10).default(1),requestId:z.string().uuid()}).strict().safeParse(request.body);
+  if(!body.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  try{return await usePlayerInventoryItem(app.prisma,{userId:request.user.sub,...body.data});}
+  catch(error){const code=error instanceof Error?error.message:"INVENTORY_USE_FAILED";const status=code==="PROFILE_NOT_FOUND"||code==="ITEM_NOT_FOUND"?404:code==="ITEM_NOT_USABLE"||code==="INSUFFICIENT_ITEM_QUANTITY"?409:400;return reply.code(status).send({error:code});}
+ });
+
 
  app.get("/bank",{preHandler:requirePlayer},async(request)=>{
   return getBankAccount(app.prisma,request.user.sub);
