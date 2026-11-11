@@ -30,7 +30,7 @@ Base URL in local development: `http://localhost:3000`. Protected endpoints requ
 
 ## Organization leader
 - `GET /v1/org-leader/:code/applications` — pending applications; requires active rank 10 or 11 membership in that organization.
-- `POST /v1/org-leader/:code/applications/:id/review` — body: `{ "decision": "ACCEPT|REJECT", "note": "..." }`; requires active rank 10 or 11 membership.
+- `POST /v1/org-leader/:code/applications/:id/review` — body: `{ "decision": "ACCEPT|REJECT", "note": "..." }`; requires recruitment permission.\n- `GET /v1/org-leader/:code/members` — active organization roster; requires leadership membership.\n- `PATCH /v1/org-leader/:code/members/:memberId/rank` — body: `{ "action": "PROMOTE|DEMOTE", "note": "..." }`; leaders can only change members below their own rank, and cannot promote anyone to their own rank.\n- `POST /v1/org-leader/:code/members/:memberId/dismiss` — body: `{ "note": "..." }`; leaders can dismiss only members below their own rank. Changes are audited.
 
 ## Admin
 - `GET /v1/admin/me` — current admin/owner identity.
