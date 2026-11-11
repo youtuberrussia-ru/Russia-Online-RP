@@ -7,6 +7,7 @@ import { depositToBank, getBankAccount, transferBankFunds, withdrawFromBank } fr
 import { parkVehicle, takeVehicleOut } from "../services/vehicleLifecycle.js";
 import { purchasePlayerProperty } from "../services/properties.js";
 import { grantPropertyAccess, listPropertyAccess, listSharedProperties, revokePropertyAccess } from "../services/propertyAccess.js";
+import { getOwnedBusinesses, purchasePlayerBusiness } from "../services/businesses.js";
 const reportSchema=z.object({targetId:z.string().optional(),category:z.enum(["PLAYER","BUG","CHEATING","OTHER"]),description:z.string().trim().min(20).max(2000)});
 const applicationSchema=z.object({organizationCode:z.enum(["MVD","FSB","ARMY","EMERCOM","HEALTH","PROSECUTOR","GOVERNMENT","TRAFFIC_POLICE","MEDIA","FSIN","CENTRAL_BANK"]),answers:z.record(z.string(),z.string().max(1000)).refine(v=>Object.keys(v).length>0)});
 async function requirePlayer(request:import("fastify").FastifyRequest,reply:import("fastify").FastifyReply){
@@ -173,6 +174,29 @@ export async function playerRoutes(app:FastifyInstance){
   if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
   try{return await revokePropertyAccess(app.prisma,profile.id,params.data.id,params.data.granteeId);}
   catch(error){const code=error instanceof Error?error.message:"PROPERTY_ACCESS_REVOKE_FAILED";return reply.code(code==="PROPERTY_NOT_FOUND"?404:403).send({error:code});}
+ });
+
+ app.get("/businesses",{preHandler:requirePlayer},async(request,reply)=>{
+  const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});
+  if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  return getOwnedBusinesses(app.prisma,profile.id);
+ });
+ app.post("/businesses/purchase",{preHandler:requirePlayer,config:{rateLimit:{max:3,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const parsed=z.object({businessCode:z.string().min(1).max(40),requestId:z.string().uuid()}).strict().safeParse(request.body);
+  if(!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  try{
+   const result=await purchasePlayerBusiness(app.prisma,{userId:request.user.sub,...parsed.data});
+   return reply.code(result.alreadyPurchased?200:201).send({
+    business:{id:result.business.id,businessCode:result.business.businessCode,displayName:result.business.displayName,businessType:result.business.businessType,district:result.business.district,status:result.business.status,cashBalance:result.business.cashBalance.toString(),purchasedPrice:result.business.purchasedPrice.toString()},
+    walletBalance:result.walletBalance,
+    alreadyPurchased:result.alreadyPurchased
+   });
+  }catch(error){
+   const code=error instanceof Error?error.message:"BUSINESS_PURCHASE_FAILED";
+   const status=code==="BUSINESS_NOT_FOUND"||code==="PROFILE_NOT_FOUND"||code==="WALLET_NOT_FOUND"?404:409;
+   request.log.warn({code},"Business purchase rejected");
+   return reply.code(status).send({error:code});
+  }
  });
  app.get("/vehicles",{preHandler:requirePlayer},async(request,reply)=>{
   const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});
