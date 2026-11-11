@@ -500,8 +500,15 @@ model BusinessSettlement {
   @@index([businessId, periodEnd])
 }
 
-enum ForumThreadStatus { OPEN LOCKED HIDDEN }
-enum ForumPostStatus { VISIBLE HIDDEN }
+enum ForumThreadStatus {
+  OPEN
+  LOCKED
+  HIDDEN
+}
+enum ForumPostStatus {
+  VISIBLE
+  HIDDEN
+}
 model ForumThread {
  id String @id @default(cuid())
  categoryCode String
