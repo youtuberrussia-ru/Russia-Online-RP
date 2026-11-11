@@ -31,7 +31,8 @@
 - [x] Player bank accounts, cash deposits/withdrawals, player-to-player transfers and separate idempotent ledgers.
 - [x] Initial 15-item property catalogue (rooms, apartments, houses, garages, workshops and commercial premises), player ownership, atomic idempotent purchases and economy-ledger integration.
 - [x] Property metadata for district, interior template, storage capacity and parking capacity.
-- [ ] Property interiors, storage, keys/access sharing, maintenance, taxes, rent and ownership transfers.
+- [x] Owner-controlled property access grants with separate entry, storage and parking permissions, revocation and shared-property listing.
+- [ ] Property interiors, physical storage inventory, maintenance, taxes, rent and ownership transfers.
 - [ ] Businesses, families and criminal factions.
 - [ ] Daily/weekly tasks, achievements and server-controlled login rewards.
 - [ ] Events, weather, world clock, leaderboards and in-game phone.
