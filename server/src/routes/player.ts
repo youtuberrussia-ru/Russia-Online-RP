@@ -3,6 +3,7 @@ import { z } from "zod";
 import { claimDailyReward } from "../services/dailyRewards.js";
 import { purchasePlayerVehicle } from "../services/vehiclePurchases.js";
 import { cancelJobShift, finishJobShift, JOBS, startJobShift } from "../services/jobs.js";
+import { depositToBank, getBankAccount, transferBankFunds, withdrawFromBank } from "../services/banking.js";
 const reportSchema=z.object({targetId:z.string().optional(),category:z.enum(["PLAYER","BUG","CHEATING","OTHER"]),description:z.string().trim().min(20).max(2000)});
 const applicationSchema=z.object({organizationCode:z.enum(["MVD","FSB","ARMY","EMERCOM","HEALTH","PROSECUTOR","GOVERNMENT","TRAFFIC_POLICE","MEDIA","FSIN","CENTRAL_BANK"]),answers:z.record(z.string(),z.string().max(1000)).refine(v=>Object.keys(v).length>0)});
 async function requirePlayer(request:import("fastify").FastifyRequest,reply:import("fastify").FastifyReply){
@@ -17,6 +18,45 @@ async function requireAppealSession(request:import("fastify").FastifyRequest,rep
 }
 export async function playerRoutes(app:FastifyInstance){
 
+ app.get("/bank",{preHandler:requirePlayer},async(request)=>{
+  return getBankAccount(app.prisma,request.user.sub);
+ });
+ app.get("/bank/transactions",{preHandler:requirePlayer},async(request,reply)=>{
+  const account=await app.prisma.bankAccount.findUnique({where:{userId:request.user.sub},select:{id:true}});
+  if(!account)return [];
+  const rows=await app.prisma.bankTransaction.findMany({where:{accountId:account.id},orderBy:{createdAt:"desc"},take:50,select:{id:true,amount:true,balanceAfter:true,reason:true,createdAt:true}});
+  return rows.map(row=>({...row,amount:row.amount.toString(),balanceAfter:row.balanceAfter.toString()}));
+ });
+ app.post("/bank/deposit",{preHandler:requirePlayer,config:{rateLimit:{max:10,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const parsed=z.object({amount:z.string().regex(/^[1-9][0-9]{0,11}$/),requestId:z.string().uuid()}).strict().safeParse(request.body);
+  if(!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  try{return reply.send(await depositToBank(app.prisma,request.user.sub,parsed.data.amount,parsed.data.requestId));}
+  catch(error){
+   const code=error instanceof Error?error.message:"BANK_DEPOSIT_FAILED";
+   const status=code==="INSUFFICIENT_CASH"?409:code==="WALLET_NOT_FOUND"?404:400;
+   return reply.code(status).send({error:code});
+  }
+ });
+ app.post("/bank/withdraw",{preHandler:requirePlayer,config:{rateLimit:{max:10,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const parsed=z.object({amount:z.string().regex(/^[1-9][0-9]{0,11}$/),requestId:z.string().uuid()}).strict().safeParse(request.body);
+  if(!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  try{return reply.send(await withdrawFromBank(app.prisma,request.user.sub,parsed.data.amount,parsed.data.requestId));}
+  catch(error){
+   const code=error instanceof Error?error.message:"BANK_WITHDRAW_FAILED";
+   const status=code==="INSUFFICIENT_BANK_FUNDS"?409:code==="WALLET_NOT_FOUND"?404:400;
+   return reply.code(status).send({error:code});
+  }
+ });
+ app.post("/bank/transfer",{preHandler:requirePlayer,config:{rateLimit:{max:5,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const parsed=z.object({recipientNickname:z.string().trim().min(3).max(20),amount:z.string().regex(/^[1-9][0-9]{0,11}$/),requestId:z.string().uuid()}).strict().safeParse(request.body);
+  if(!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  try{return reply.send(await transferBankFunds(app.prisma,request.user.sub,parsed.data.recipientNickname,parsed.data.amount,parsed.data.requestId));}
+  catch(error){
+   const code=error instanceof Error?error.message:"BANK_TRANSFER_FAILED";
+   const status=code==="RECIPIENT_NOT_FOUND"?404:code==="INSUFFICIENT_BANK_FUNDS"?409:400;
+   return reply.code(status).send({error:code});
+  }
+ });
  app.get("/jobs",{preHandler:requirePlayer},async()=>{
   return JOBS.map(job=>({code:job.code,title:job.title,description:job.description,hourlyRate:job.hourlyRate.toString()}));
  });
