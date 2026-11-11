@@ -11,6 +11,7 @@ import { getOwnedBusinesses, purchasePlayerBusiness } from "../services/business
 import { dismissBusinessEmployee, hireBusinessEmployee, listBusinessEmployees, updateBusinessEmployee } from "../services/businessEmployees.js";
 import { listBusinessStock, purchaseBusinessProduct, restockBusiness } from "../services/businessCommerce.js";
 import { createForumReply, createForumThread } from "../services/forum.js";
+import { listPlayerInventory } from "../services/businessCommerce.js";
 import { worldSessions } from "../world/runtime.js";
 import { configureBusinessFinance, getBusinessFinanceReport, recordBusinessExpense, setBusinessEmployeeSalary, settleBusinessPeriod } from "../services/businessFinance.js";
 const reportSchema=z.object({targetId:z.string().optional(),category:z.enum(["PLAYER","BUG","CHEATING","OTHER"]),description:z.string().trim().min(20).max(2000)});
@@ -26,6 +27,11 @@ async function requireAppealSession(request:import("fastify").FastifyRequest,rep
  if(request.user.role!=="PLAYER"&&request.user.scope!=="ban:appeal")return reply.code(403).send({error:"APPEAL_SESSION_REQUIRED"});
 }
 export async function playerRoutes(app:FastifyInstance){
+
+ app.get("/inventory",{preHandler:requirePlayer},async(request,reply)=>{
+  try{return await listPlayerInventory(app.prisma,request.user.sub);}
+  catch(error){const code=error instanceof Error?error.message:"INVENTORY_LOAD_FAILED";return reply.code(code==="PROFILE_NOT_FOUND"?404:500).send({error:code});}
+ });
 
  app.get("/bank",{preHandler:requirePlayer},async(request)=>{
   return getBankAccount(app.prisma,request.user.sub);

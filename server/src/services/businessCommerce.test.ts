@@ -19,7 +19,8 @@ function saleDb() {
     businessStockItem: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
     wallet: { findUnique: vi.fn().mockResolvedValue({ id: "w1", balance: 500n }), updateMany: vi.fn().mockResolvedValue({ count: 1 }), findUniqueOrThrow: vi.fn().mockResolvedValue({ balance: 480n }) },
     economyTransaction: { create: vi.fn().mockResolvedValue({}) },
-    businessLedger: { create: vi.fn().mockResolvedValue({}) }
+    businessLedger: { create: vi.fn().mockResolvedValue({}) },
+    playerInventoryItem: { upsert: vi.fn().mockResolvedValue({ quantity: 1 }) }
   };
   return { tx, prisma: { ...tx, $transaction: (fn: any) => fn(tx) } as any };
 }
@@ -66,6 +67,8 @@ describe("business commerce", () => {
     expect(tx.wallet.updateMany).toHaveBeenCalled();
     expect(tx.economyTransaction.create).toHaveBeenCalled();
     expect(tx.businessLedger.create).toHaveBeenCalled();
+    expect(tx.playerInventoryItem.upsert).toHaveBeenCalledWith(expect.objectContaining({ where: { profileId_itemCode: { profileId: "buyer1", itemCode: "water" } } }));
+    expect(result.inventoryQuantity).toBe(1);
   });
 
   it("does not charge a player when stock is unavailable", async () => {

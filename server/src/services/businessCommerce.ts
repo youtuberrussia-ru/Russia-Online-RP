@@ -94,8 +94,32 @@ export async function purchaseBusinessProduct(prisma: PrismaClient, input: { use
     const updatedWallet = await tx.wallet.findUniqueOrThrow({ where: { id: wallet.id }, select: { balance: true } });
     const updatedBusiness = await tx.business.update({ where: { id: business.id }, data: { cashBalance: { increment: total } }, select: { cashBalance: true } });
     const sale = await tx.businessSale.create({ data: { businessId: business.id, buyerProfileId: profile.id, productCode: product.code, quantity, totalAmount: total, idempotencyKey: key } });
+    const inventoryItem = await tx.playerInventoryItem.upsert({
+      where: { profileId_itemCode: { profileId: profile.id, itemCode: product.code } },
+      create: { profileId: profile.id, itemCode: product.code, quantity },
+      update: { quantity: { increment: quantity } },
+      select: { quantity: true }
+    });
     await tx.economyTransaction.create({ data: { walletId: wallet.id, amount: -total, balanceAfter: updatedWallet.balance, reason: "Покупка в бизнесе: " + product.name + " × " + quantity, idempotencyKey: key } });
     await tx.businessLedger.create({ data: { businessId: business.id, kind: "SALE", amount: total, balanceAfter: updatedBusiness.cashBalance, reason: "Продажа товара: " + product.name + " × " + quantity, idempotencyKey: "business-ledger:" + key } });
-    return { alreadyPurchased: false, saleId: sale.id, productName: product.name, quantity, total: total.toString(), walletBalance: updatedWallet.balance.toString(), businessCashBalance: updatedBusiness.cashBalance.toString() };
+    return { alreadyPurchased: false, saleId: sale.id, productName: product.name, quantity, inventoryQuantity: inventoryItem.quantity, total: total.toString(), walletBalance: updatedWallet.balance.toString(), businessCashBalance: updatedBusiness.cashBalance.toString() };
   }, { isolationLevel: "Serializable" });
+}
+
+
+export async function listPlayerInventory(prisma: PrismaClient, userId: string) {
+  const profile = await prisma.playerProfile.findUnique({ where: { userId }, select: { id: true } });
+  if (!profile) throw new Error("PROFILE_NOT_FOUND");
+  const items = await prisma.playerInventoryItem.findMany({
+    where: { profileId: profile.id, quantity: { gt: 0 } },
+    orderBy: { itemCode: "asc" },
+    select: { itemCode: true, quantity: true, updatedAt: true }
+  });
+  const catalog = new Map(products.map(item => [item.code, item.name]));
+  return items.map(item => ({
+    code: item.itemCode,
+    name: catalog.get(item.itemCode) ?? "Неизвестный предмет",
+    quantity: item.quantity,
+    updatedAt: item.updatedAt
+  }));
 }
