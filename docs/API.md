@@ -25,6 +25,8 @@ Base URL in local development: `http://localhost:3000`. Protected endpoints requ
 - `POST /v1/player/jobs/shifts/start` — starts one active shift; body: `{ "jobCode": "TAXI" }`.
 - `POST /v1/player/jobs/shifts/:id/finish` — finishes a shift; body: `{ "requestId": "<UUID>" }`. Server measures elapsed time and calculates pay; minimum shift is 10 minutes, paid time is capped at 2 hours, and daily job income is capped at 25,000.
 - `POST /v1/player/jobs/shifts/:id/cancel` — cancels an active shift without payout.
+- `POST /v1/player/vehicles/:id/take-out` — moves an owned stored vehicle into the active garage state; only one active vehicle per profile is allowed.
+- `POST /v1/player/vehicles/:id/park` — returns the player's active vehicle to stored status.
 - `GET /v1/player/vehicles` — authenticated player garage; returns vehicles owned by the current profile.
 - `POST /v1/player/vehicles/purchase` — authenticated purchase; body: `{ "vehicleCode": "sedan_01", "requestId": "<UUID>" }`. Purchase, wallet debit, ledger entry and vehicle ownership are committed atomically. Repeating the same request ID returns the original vehicle without charging again.
 - `POST /v1/player/daily-rewards/claim` — authenticated daily reward claim. Server determines the UTC day and reward; duplicate same-day claims are blocked.
