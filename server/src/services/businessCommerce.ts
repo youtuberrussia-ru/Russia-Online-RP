@@ -115,7 +115,7 @@ export async function listPlayerInventory(prisma: PrismaClient, userId: string) 
     orderBy: { itemCode: "asc" },
     select: { itemCode: true, quantity: true, updatedAt: true }
   });
-  const catalog = new Map(products.map(item => [item.code, item.name]));
+  const catalog = new Map<string, string>(products.map(item => [item.code, item.name]));
   return items.map(item => ({
     code: item.itemCode,
     name: catalog.get(item.itemCode) ?? "Неизвестный предмет",
