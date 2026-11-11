@@ -1,13 +1,13 @@
 import type { PrismaClient } from "@prisma/client";
 
 const MAX_OPERATION = 1_000_000_000n;
-function parseAmount(value: string) {
+export function parseBankAmount(value: string) {
   if (!/^[1-9][0-9]{0,11}$/.test(value)) throw new Error("INVALID_AMOUNT");
   const amount = BigInt(value);
   if (amount > MAX_OPERATION) throw new Error("AMOUNT_TOO_LARGE");
   return amount;
 }
-function assertRequestId(value: string) {
+export function assertBankRequestId(value: string) {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
     throw new Error("INVALID_REQUEST_ID");
   }
@@ -19,8 +19,8 @@ export async function getBankAccount(prisma: PrismaClient, userId: string) {
 }
 
 export async function depositToBank(prisma: PrismaClient, userId: string, amountText: string, requestId: string) {
-  const amount = parseAmount(amountText);
-  assertRequestId(requestId);
+  const amount = parseBankAmount(amountText);
+  assertBankRequestId(requestId);
   return prisma.$transaction(async tx => {
     const key = `bank-deposit:${requestId}`;
     const prior = await tx.bankTransaction.findUnique({ where: { idempotencyKey: key } });
