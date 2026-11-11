@@ -25,6 +25,10 @@ Base URL in local development: `http://localhost:3000`. Protected endpoints requ
 - `POST /v1/player/jobs/shifts/start` — starts one active shift; body: `{ "jobCode": "TAXI" }`.
 - `POST /v1/player/jobs/shifts/:id/finish` — finishes a shift; body: `{ "requestId": "<UUID>" }`. Server measures elapsed time and calculates pay; minimum shift is 10 minutes, paid time is capped at 2 hours, and daily job income is capped at 25,000.
 - `POST /v1/player/jobs/shifts/:id/cancel` — cancels an active shift without payout.
+- `GET /v1/player/businesses/:id/employees` — owner or staff manager may view the business roster.
+- `POST /v1/player/businesses/:id/employees` — hire by nickname; body: `{ "nickname": "Player", "jobTitle": "Кассир" }`. Owner or staff manager may hire; new employees receive no elevated permissions by default.
+- `PATCH /v1/player/businesses/:id/employees/:employeeId` — owner only; body: `{ "jobTitle": "Менеджер", "canManageStaff": false, "canManageStock": true, "canManageCash": false }`. Only the owner can assign elevated permissions.
+- `DELETE /v1/player/businesses/:id/employees/:employeeId` — owner or staff manager may dismiss ordinary staff; only the owner may dismiss an employee with elevated permissions. All staff changes are audited.
 - `POST /v1/player/vehicles/:id/take-out` — moves an owned stored vehicle into the active garage state; only one active vehicle per profile is allowed.
 - `POST /v1/player/vehicles/:id/park` — returns the player's active vehicle to stored status.
 - `GET /v1/player/properties` — authenticated owned-property list for the current profile.
