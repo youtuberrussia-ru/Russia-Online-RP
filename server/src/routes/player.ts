@@ -5,6 +5,7 @@ import { purchasePlayerVehicle } from "../services/vehiclePurchases.js";
 import { cancelJobShift, finishJobShift, JOBS, startJobShift } from "../services/jobs.js";
 import { depositToBank, getBankAccount, transferBankFunds, withdrawFromBank } from "../services/banking.js";
 import { parkVehicle, takeVehicleOut } from "../services/vehicleLifecycle.js";
+import { purchasePlayerProperty } from "../services/properties.js";
 const reportSchema=z.object({targetId:z.string().optional(),category:z.enum(["PLAYER","BUG","CHEATING","OTHER"]),description:z.string().trim().min(20).max(2000)});
 const applicationSchema=z.object({organizationCode:z.enum(["MVD","FSB","ARMY","EMERCOM","HEALTH","PROSECUTOR","GOVERNMENT","TRAFFIC_POLICE","MEDIA","FSIN","CENTRAL_BANK"]),answers:z.record(z.string(),z.string().max(1000)).refine(v=>Object.keys(v).length>0)});
 async function requirePlayer(request:import("fastify").FastifyRequest,reply:import("fastify").FastifyReply){
@@ -115,6 +116,29 @@ export async function playerRoutes(app:FastifyInstance){
   catch(error){
    const code=error instanceof Error?error.message:"VEHICLE_PARK_FAILED";
    const status=code==="PROFILE_NOT_FOUND"||code==="VEHICLE_NOT_FOUND"?404:409;
+   return reply.code(status).send({error:code});
+  }
+ });
+ app.get("/properties",{preHandler:requirePlayer},async(request,reply)=>{
+  const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});
+  if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  const properties=await app.prisma.playerProperty.findMany({where:{profileId:profile.id,status:"OWNED"},orderBy:{createdAt:"desc"},select:{id:true,propertyCode:true,displayName:true,propertyType:true,purchasedPrice:true,status:true,createdAt:true}});
+  return properties.map(property=>({...property,purchasedPrice:property.purchasedPrice.toString()}));
+ });
+ app.post("/properties/purchase",{preHandler:requirePlayer,config:{rateLimit:{max:5,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const parsed=z.object({propertyCode:z.string().min(1).max(40),requestId:z.string().uuid()}).strict().safeParse(request.body);
+  if(!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  try{
+   const result=await purchasePlayerProperty(app.prisma,{userId:request.user.sub,...parsed.data});
+   return reply.code(result.alreadyPurchased?200:201).send({
+    property:{id:result.property.id,propertyCode:result.property.propertyCode,displayName:result.property.displayName,propertyType:result.property.propertyType,status:result.property.status,purchasedPrice:result.property.purchasedPrice.toString()},
+    balance:result.balance,
+    alreadyPurchased:result.alreadyPurchased
+   });
+  }catch(error){
+   const code=error instanceof Error?error.message:"PROPERTY_PURCHASE_FAILED";
+   const status=code==="PROPERTY_NOT_FOUND"||code==="PROFILE_NOT_FOUND"||code==="WALLET_NOT_FOUND"?404:409;
+   request.log.warn({code},"Property purchase rejected");
    return reply.code(status).send({error:code});
   }
  });
