@@ -18,6 +18,8 @@ Each organization has a dedicated building, interview-based recruitment, leader/
 - No donations or paid advantages in the current design.
 - Currency is earned through jobs, businesses, tasks, events and legitimate gameplay.
 - Every balance change is a server-side ledger transaction with idempotency and audit.
+- Cash wallet and bank account are separate balances; deposits, withdrawals and player transfers are atomic and recorded in the bank ledger.
+- Player-to-player transfers use account nicknames, reject self-transfers and never accept client-supplied balances or fees.
 - Login rewards cannot be reset by reinstalling or changing the device clock.
 - Reward amounts remain configurable and require economy testing.
 
