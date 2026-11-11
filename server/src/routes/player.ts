@@ -8,6 +8,7 @@ import { parkVehicle, takeVehicleOut } from "../services/vehicleLifecycle.js";
 import { purchasePlayerProperty } from "../services/properties.js";
 import { grantPropertyAccess, listPropertyAccess, listSharedProperties, revokePropertyAccess } from "../services/propertyAccess.js";
 import { getOwnedBusinesses, purchasePlayerBusiness } from "../services/businesses.js";
+import { dismissBusinessEmployee, hireBusinessEmployee, listBusinessEmployees, updateBusinessEmployee } from "../services/businessEmployees.js";
 const reportSchema=z.object({targetId:z.string().optional(),category:z.enum(["PLAYER","BUG","CHEATING","OTHER"]),description:z.string().trim().min(20).max(2000)});
 const applicationSchema=z.object({organizationCode:z.enum(["MVD","FSB","ARMY","EMERCOM","HEALTH","PROSECUTOR","GOVERNMENT","TRAFFIC_POLICE","MEDIA","FSIN","CENTRAL_BANK"]),answers:z.record(z.string(),z.string().max(1000)).refine(v=>Object.keys(v).length>0)});
 async function requirePlayer(request:import("fastify").FastifyRequest,reply:import("fastify").FastifyReply){
@@ -176,6 +177,40 @@ export async function playerRoutes(app:FastifyInstance){
   catch(error){const code=error instanceof Error?error.message:"PROPERTY_ACCESS_REVOKE_FAILED";return reply.code(code==="PROPERTY_NOT_FOUND"?404:403).send({error:code});}
  });
 
+ app.get("/businesses/:id/employees",{preHandler:requirePlayer},async(request,reply)=>{
+  const params=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);
+  if(!params.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});
+  if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  try{return await listBusinessEmployees(app.prisma,profile.id,params.data.id);}
+  catch(error){const code=error instanceof Error?error.message:"BUSINESS_EMPLOYEE_LIST_FAILED";return reply.code(code==="BUSINESS_NOT_FOUND"?404:403).send({error:code});}
+ });
+ app.post("/businesses/:id/employees",{preHandler:requirePlayer,config:{rateLimit:{max:5,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const params=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);
+  const parsed=z.object({nickname:z.string().trim().min(3).max(20),jobTitle:z.string().trim().min(2).max(40)}).strict().safeParse(request.body);
+  if(!params.success||!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});
+  if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  try{return reply.code(201).send(await hireBusinessEmployee(app.prisma,{actorUserId:request.user.sub,actorProfileId:profile.id,businessId:params.data.id,...parsed.data}));}
+  catch(error){const code=error instanceof Error?error.message:"BUSINESS_EMPLOYEE_HIRE_FAILED";const status=code==="BUSINESS_NOT_FOUND"||code==="PLAYER_NOT_FOUND"?404:code==="BUSINESS_PERMISSION_DENIED"?403:409;return reply.code(status).send({error:code});}
+ });
+ app.patch("/businesses/:id/employees/:employeeId",{preHandler:requirePlayer,config:{rateLimit:{max:10,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const params=z.object({id:z.string().min(1).max(64),employeeId:z.string().min(1).max(64)}).safeParse(request.params);
+  const parsed=z.object({jobTitle:z.string().trim().min(2).max(40),canManageStaff:z.boolean(),canManageStock:z.boolean(),canManageCash:z.boolean()}).strict().safeParse(request.body);
+  if(!params.success||!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});
+  if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  try{return reply.send(await updateBusinessEmployee(app.prisma,{actorUserId:request.user.sub,actorProfileId:profile.id,businessId:params.data.id,employeeId:params.data.employeeId,...parsed.data}));}
+  catch(error){const code=error instanceof Error?error.message:"BUSINESS_EMPLOYEE_UPDATE_FAILED";const status=code==="EMPLOYEE_NOT_FOUND"?404:code==="BUSINESS_OWNER_REQUIRED"?403:409;return reply.code(status).send({error:code});}
+ });
+ app.delete("/businesses/:id/employees/:employeeId",{preHandler:requirePlayer,config:{rateLimit:{max:5,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const params=z.object({id:z.string().min(1).max(64),employeeId:z.string().min(1).max(64)}).safeParse(request.params);
+  if(!params.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});
+  if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  try{return reply.send(await dismissBusinessEmployee(app.prisma,{actorUserId:request.user.sub,actorProfileId:profile.id,businessId:params.data.id,employeeId:params.data.employeeId}));}
+  catch(error){const code=error instanceof Error?error.message:"BUSINESS_EMPLOYEE_DISMISS_FAILED";const status=code==="BUSINESS_NOT_FOUND"||code==="EMPLOYEE_NOT_FOUND"?404:code==="BUSINESS_PERMISSION_DENIED"||code==="OWNER_REQUIRED_TO_DISMISS_PRIVILEGED_EMPLOYEE"?403:409;return reply.code(status).send({error:code});}
+ });
  app.get("/businesses",{preHandler:requirePlayer},async(request,reply)=>{
   const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});
   if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
