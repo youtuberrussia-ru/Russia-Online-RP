@@ -35,7 +35,7 @@
 - [ ] Property interiors, physical storage inventory, maintenance, taxes, rent and ownership transfers.
 - [x] Initial business catalogue, unique ownership, atomic idempotent purchases and wallet-ledger integration.
 - [x] Business employee roster, hiring/dismissal, owner-assigned staff/stock/cash permissions and audited changes; delegated managers cannot grant elevated permissions or dismiss privileged staff.
-- [ ] Business stock, cash operations, expenses and verifiable revenue sources.
+- [x] Initial business stock inventory, server-priced restocking from business cash, and player purchases with atomic stock/wallet/business-ledger updates and idempotency.\n- [ ] Business expenses, payroll, supplier contracts, taxes, cash withdrawal/deposit controls and full financial statements.
 - [ ] Families and criminal factions.
 - [ ] Daily/weekly tasks, achievements and server-controlled login rewards.
 - [ ] Events, weather, world clock, leaderboards and in-game phone.
