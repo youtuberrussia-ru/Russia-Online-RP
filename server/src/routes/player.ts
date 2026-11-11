@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { claimDailyReward } from "../services/dailyRewards.js";
+import { purchasePlayerVehicle } from "../services/vehiclePurchases.js";
 const reportSchema=z.object({targetId:z.string().optional(),category:z.enum(["PLAYER","BUG","CHEATING","OTHER"]),description:z.string().trim().min(20).max(2000)});
 const applicationSchema=z.object({organizationCode:z.enum(["MVD","FSB","ARMY","EMERCOM","HEALTH","PROSECUTOR","GOVERNMENT","TRAFFIC_POLICE","MEDIA","FSIN","CENTRAL_BANK"]),answers:z.record(z.string(),z.string().max(1000)).refine(v=>Object.keys(v).length>0)});
 async function requirePlayer(request:import("fastify").FastifyRequest,reply:import("fastify").FastifyReply){
@@ -14,7 +15,32 @@ async function requireAppealSession(request:import("fastify").FastifyRequest,rep
  if(request.user.role!=="PLAYER"&&request.user.scope!=="ban:appeal")return reply.code(403).send({error:"APPEAL_SESSION_REQUIRED"});
 }
 export async function playerRoutes(app:FastifyInstance){
- app.get("/me",{preHandler:requirePlayer},async(request,reply)=>{
+
+ app.get("/vehicles",{preHandler:requirePlayer},async(request,reply)=>{
+  const profile=await app.prisma.playerProfile.findUnique({where:{userId:request.user.sub},select:{id:true}});
+  if(!profile)return reply.code(404).send({error:"PROFILE_NOT_FOUND"});
+  const vehicles=await app.prisma.playerVehicle.findMany({where:{profileId:profile.id},orderBy:{createdAt:"desc"},select:{id:true,modelCode:true,displayName:true,plate:true,purchasedPrice:true,status:true,createdAt:true}});
+  return vehicles.map(vehicle=>({...vehicle,purchasedPrice:vehicle.purchasedPrice.toString()}));
+ });
+ app.post("/vehicles/purchase",{preHandler:requirePlayer,config:{rateLimit:{max:5,timeWindow:"1 minute"}}},async(request,reply)=>{
+  const parsed=z.object({vehicleCode:z.string().min(1).max(40),requestId:z.string().uuid()}).strict().safeParse(request.body);
+  if(!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
+  try{
+   const result=await purchasePlayerVehicle(app.prisma,{userId:request.user.sub,...parsed.data});
+   return reply.code(result.alreadyPurchased?200:201).send({
+    vehicle:{id:result.vehicle.id,modelCode:result.vehicle.modelCode,displayName:result.vehicle.displayName,plate:result.vehicle.plate,status:result.vehicle.status,purchasedPrice:result.vehicle.purchasedPrice.toString()},
+    balance:result.balance,
+    alreadyPurchased:result.alreadyPurchased
+   });
+  }catch(error){
+   const code=error instanceof Error?error.message:"VEHICLE_PURCHASE_FAILED";
+   const status=code==="VEHICLE_NOT_FOUND"||code==="PROFILE_NOT_FOUND"||code==="WALLET_NOT_FOUND"?404:code==="INSUFFICIENT_FUNDS"?409:code==="IDEMPOTENCY_KEY_REUSED"?409:409;
+   if(status===409)request.log.warn({code},"Vehicle purchase rejected");
+   else request.log.error(error);
+   return reply.code(status).send({error:code});
+  }
+ });
+\n app.get("/me",{preHandler:requirePlayer},async(request,reply)=>{
   const user=await app.prisma.user.findUnique({where:{id:request.user.sub},select:{id:true,email:true,createdAt:true,profile:{include:{memberships:{where:{active:true},include:{organization:true,rank:true}}}},wallet:{select:{balance:true}}}});
   if(!user)return reply.code(404).send({error:"USER_NOT_FOUND"});
   return {...user,wallet:user.wallet?{balance:user.wallet.balance.toString()}:null};
