@@ -24,7 +24,8 @@
 ## Phase 2 — game services
 - [ ] Authoritative player sessions and realtime transport (movement integrator exists; socket transport and room lifecycle remain).
 - [x] Initial vehicle catalogue, player garage persistence and atomic idempotent purchases with wallet ledger integration.
-- [ ] Vehicle spawning, parking, garage locations, ownership transfers, fuel, damage and server-authoritative driving.
+- [x] Initial owned-vehicle take-out/parking lifecycle with a one-active-vehicle rule.
+- [ ] Garage locations, ownership transfers, fuel, damage and server-authoritative driving.
 - [ ] Movement, combat, inventory and interaction validation.
 - [x] Initial server-controlled job catalogue, shift lifecycle and wallet-ledger payouts with duration and daily-income caps.
 - [x] Player bank accounts, cash deposits/withdrawals, player-to-player transfers and separate idempotent ledgers.
