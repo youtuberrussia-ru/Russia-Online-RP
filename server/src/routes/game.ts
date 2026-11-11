@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { getVehicleCatalog } from "../services/vehicleCatalog.js";
 import { getPropertyCatalog } from "../services/properties.js";
 import { getBusinessCatalog } from "../services/businesses.js";
@@ -8,7 +9,7 @@ export async function gameRoutes(app:FastifyInstance){
  app.get("/properties",async()=>getPropertyCatalog());
  app.get("/businesses",async()=>getBusinessCatalog(app.prisma));
  app.get("/business-products",async(request,reply)=>{
-  const parsed=(await import("zod")).z.object({businessType:(await import("zod")).z.string().optional()}).safeParse(request.query);
+  const parsed=z.object({businessType:z.string().max(30).optional()}).safeParse(request.query);
   if(!parsed.success)return reply.code(400).send({error:"INVALID_INPUT"});
   return getBusinessProductCatalog(parsed.data.businessType);
  });
