@@ -15,6 +15,11 @@ Base URL in local development: `http://localhost:3000`. Protected endpoints requ
 - `GET /v1/player/me` — authenticated account, profile, active organization memberships and wallet balance.
 - `POST /v1/player/reports` — authenticated report. Body: `{ "category": "PLAYER|BUG|CHEATING|OTHER", "description": "...", "targetId": "optional" }`.
 - `POST /v1/player/organizations/applications` — authenticated application. Body: `{ "organizationCode": "...", "answers": { "question": "answer" } }`.
+- `GET /v1/player/bank` — authenticated bank account balance; creates an empty account on first access.
+- `GET /v1/player/bank/transactions` — latest 50 bank ledger entries.
+- `POST /v1/player/bank/deposit` — move cash wallet funds into the bank; body: { "amount": "500", "requestId": "<UUID>" }.
+- `POST /v1/player/bank/withdraw` — move bank funds into the cash wallet; body: { "amount": "500", "requestId": "<UUID>" }.
+- `POST /v1/player/bank/transfer` — atomic bank-to-bank player transfer; body: { "recipientNickname": "Player", "amount": "500", "requestId": "<UUID>" }. Amounts are positive integer strings, capped at 1,000,000,000 per operation. Transfers and deposits/withdrawals are ledgered and idempotent.
 - `GET /v1/player/jobs` — server-owned lawful job catalogue and hourly rates.
 - `GET /v1/player/jobs/shifts` — latest 20 job shifts for the current profile.
 - `POST /v1/player/jobs/shifts/start` — starts one active shift; body: `{ "jobCode": "TAXI" }`.
