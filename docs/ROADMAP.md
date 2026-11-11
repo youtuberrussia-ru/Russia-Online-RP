@@ -18,7 +18,7 @@
 - [ ] Secure owner bootstrap that cannot be claimed by a player.
 - [ ] Owner/developer dashboard, admin panel, leader panel and audit search.
 - [ ] Player reports, moderation cases, ban appeals and evidence review.
-- [ ] Organization interviews, hiring/firing, rank changes, salaries, duty, fleet, storage and history.
+- [x] Organization interview applications, leader review, active roster, audited promotions/demotions and dismissal with rank hierarchy boundaries.\n- [ ] Organization salaries, duty, fleet, storage, department operations and complete employment history.
 
 ## Phase 2 — game services
 - [ ] Authoritative player sessions and realtime transport (movement integrator exists; socket transport and room lifecycle remain).
