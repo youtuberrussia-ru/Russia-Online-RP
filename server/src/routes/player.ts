@@ -123,9 +123,9 @@ export async function playerRoutes(app:FastifyInstance){
  });
 
  app.get("/me",{preHandler:requirePlayer},async(request,reply)=>{
-  const user=await app.prisma.user.findUnique({where:{id:request.user.sub},select:{id:true,email:true,createdAt:true,profile:{include:{memberships:{where:{active:true},include:{organization:true,rank:true}}}},wallet:{select:{balance:true}}}});
+  const user=await app.prisma.user.findUnique({where:{id:request.user.sub},select:{id:true,email:true,createdAt:true,profile:{include:{memberships:{where:{active:true},include:{organization:true,rank:true}}}},wallet:{select:{balance:true}},bankAccount:{select:{balance:true}}}});
   if(!user)return reply.code(404).send({error:"USER_NOT_FOUND"});
-  return {...user,wallet:user.wallet?{balance:user.wallet.balance.toString()}:null};
+  return {...user,wallet:user.wallet?{balance:user.wallet.balance.toString()}:null,bankAccount:user.bankAccount?{balance:user.bankAccount.balance.toString()}:null};
  });
  app.post("/reports",{preHandler:requirePlayer},async(request,reply)=>{
   const parsed=reportSchema.safeParse(request.body);
